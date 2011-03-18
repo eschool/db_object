@@ -32,6 +32,7 @@
 
 class db_object
 {
+
     /**
      * All attributes pulled from a database or currently set for the object
      *
@@ -327,9 +328,11 @@ class db_object
                     $time_string = date('Y-m-d H:i:s');
                     $this->set_attribute('inserted_on', $time_string, false, true, false);
                 }
-                if (isset($_SESSION['login_user']) && $_SESSION['login_user'] instanceof db_object) {
-                    if ($this->is_acceptable_attribute('inserted_by') ) {
-                        $this->set_attribute('inserted_by', $_SESSION['login_user']->get_id(), false, true, false);
+                if (false !== ($current_user_id = get_user_id())) {
+                    if (is_numeric($current_user_id)) {
+                        if ($this->is_acceptable_attribute('inserted_by') ) {
+                            $this->set_attribute('inserted_by', $current_user_id, false, true, false);
+                        }
                     }
                 }
                 if ($this->is_acceptable_attribute('inserted_ip')) {
@@ -399,9 +402,11 @@ class db_object
                     $time_string = date('Y-m-d H:i:s');
                     $this->set_attribute('updated_on', $time_string, false, true, false);
                 }
-                if (isset($_SESSION['login_user']) && $_SESSION['login_user'] instanceof db_object) {
-                    if ($this->is_acceptable_attribute('updated_by')) {
-                        $this->set_attribute('updated_by', $_SESSION['login_user']->get_id(), false, true, false);
+                if (false !== ($current_user_id = get_user_id())) {
+                    if (is_numeric($current_user_id)) {
+                        if ($this->is_acceptable_attribute('updated_by') ) {
+                            $this->set_attribute('updated_by', $current_user_id, false, true, false);
+                        }
                     }
                 }
                 if ($this->is_acceptable_attribute('updated_ip')) {
@@ -1648,7 +1653,7 @@ class db_object
         }
 
         // ensure valid foreign key
-        if ( !get_single_field_value( 'staff', 'id', array( 'id' => $this->inserted_by )))
+        if ( !get_single_field_value( USER_TABLE, 'id', array( 'id' => $this->inserted_by )))
         {
             return FALSE;
         }
@@ -1670,7 +1675,7 @@ class db_object
             return FALSE;
         }
 
-        if ( !get_single_field_value( 'staff', 'id', array( 'id' => $this->updated_by )))
+        if ( !get_single_field_value( USER_TABLE, 'id', array( 'id' => $this->updated_by )))
         {
             return FALSE;
         }

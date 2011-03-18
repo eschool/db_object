@@ -1,5 +1,25 @@
 <?php
 
+/**
+ * This is the name of the table that contains IDs returned by get_user_id.
+ * db_object uses this value to return a db_object of the updater or inserter of a record
+ */
+define('USER_TABLE', 'staff');
+
+/**
+ * db_object uses this function to assign the updated_by and inserted_by metadata.
+ * This function should return the numeric ID of the user that changed a DB record.
+ * It can return false, which will result in no change to the updated_by or inserted_by metadata.
+ *
+ * @author John Colvin <john.colvin@eschoolconsultants.com>
+ */
+function get_user_id() {
+    if (isset($_SESSION['login_user']) && $_SESSION['login_user'] instanceof db_object) {
+        return $_SESSION['login_user']->get_id();
+    }
+    return false;
+}
+
 require_once 'db_object.php';
 require_once 'db_recordset.php';
 
@@ -28,7 +48,7 @@ function get_sql_insert_string($table, $columns, $values, $where = '') {
     $column_array = array();
 
     //  Generate the columns list
-    for ($i = 0; $i < $num_columns; $i) {
+    for ($i = 0; $i < $num_columns; $i++) {
 
         // Skip this column if the value is NULL
         if (is_null($values[$i]))
@@ -46,7 +66,7 @@ function get_sql_insert_string($table, $columns, $values, $where = '') {
     $value_array = array();
 
     //  Generate the values list
-    for ($i = 0; $i < $num_columns; $i)
+    for ($i = 0; $i < $num_columns; $i++)
     {
         $value = $values[$i];
 
@@ -376,7 +396,7 @@ function query($query_string, $debug = false, $key = false) {
         }
         if (false !== stripos($query_string, 'DELETE')) {
             if (isset($GLOBALS['delete_queries'])) {
-                $GLOBALS['delete_queries'];
+                ++$GLOBALS['delete_queries'];
             } else {
                 $GLOBALS['delete_queries'] = 1;
             }
@@ -389,7 +409,7 @@ function query($query_string, $debug = false, $key = false) {
         if (!isset($GLOBALS['query_check']['query()']))
             $GLOBALS['query_check']['query()'] = 0;
 
-        $GLOBALS['query_check']['query()'];
+        $GLOBALS['query_check']['query()']++;
 
         if (is_resource($result)) {
             $return_array = array();
