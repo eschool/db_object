@@ -507,3 +507,98 @@ function debug($debug_thing, $return = false, $nopre = false) {
         }
     }
 }
+
+function get_where_clause_from_constraints($constraints = null)
+{
+    $where_clause = array();
+        // populate based on given constraints
+    if (null !== $constraints) {
+        foreach ($constraints as $field_name => $values)
+        {
+            // If operator is not specified, then assume "="
+            if ( strpos( $field_name, ' ' ) === FALSE )
+            {
+                if (null === $values) {
+                    //  Handle a special case where checking to see if something is exactly NULL
+                    $where_clause[] = '`' . mysql_real_escape_string($field_name) . '` IS NULL';
+                } else if (! is_array($values)) {
+                    //  $values is a scalar value
+                    $where_clause[] = '`' . mysql_real_escape_string($field_name) . "` = '" . mysql_real_escape_string($values) . "'";
+                } else if ($clause = get_sql_in_string($values, $field_name)) {
+                    $where_clause[] = $clause;
+                }
+            }
+            else
+            {
+                // get the field and operator which is separated by a space
+                $field = substr( $field_name, 0, strpos( $field_name, ' ' ));
+                $operator = substr( $field_name, strpos( $field_name, ' ' ) + 1 );
+
+                // allow for NOT IN
+                if ( is_array( $values ))
+                {
+                    if ( $operator == '!=' and $clause = get_sql_in_string( $values, $field, TRUE ))
+                    {
+                        $where_clause[] = $clause;
+                    }
+                    else
+                    {
+                        throw new Exception( 'Invalid constraint values' );
+                    }
+                }
+
+                // attempt to create a query using operators such as "<" or ">="
+                elseif ( $clause = get_sql_where_string( $field, $values, $operator ))
+                {
+                    $where_clause[] = $clause;
+                }
+
+                // report error
+                else
+                {
+                    throw new Exception( 'Uknown constraint' );
+                }
+            }
+        }
+    }
+
+    return $where_clause;
+}
+
+/**
+ * This function adds an "AND" to a SQL string if it needs it.  This is
+ * handy if you are appending a lot of SQL together but aren't keeping
+ * track of the exact where clauses that are being added.
+ *
+ * Paramters:
+ *  $sql          = This is the sql statement up to the point where you want to add
+ *                another where clause.
+ *  $where_sql    = This is the where clause you want to add.
+ */
+function add_and_to_sql($sql, $where_sql)
+{
+   $trimmed_sql = trim($sql);
+   if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -3)) == 'AND') or substr($trimmed_sql, -1) == '(')
+      return $sql . " $where_sql";
+   else
+      return $sql . " AND $where_sql";
+}
+
+/**
+ * This function adds an "OR" to a SQL string if it needs it.  This is
+ * handy if you are appending a lot of SQL together but aren't keeping
+ * track of the exact where clauses that are being added.
+ *
+ * Paramters:
+ *  $sql          = This is the sql statement up to the point where you want to add
+ *                another where clause.
+ *  $where_sql    = This is the where clause you want to add.
+ */
+function add_or_to_sql($sql, $where_sql)
+{
+   $trimmed_sql = trim($sql);
+   if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -2)) == 'OR') or (substr($trimmed_sql, -1) == '('))
+      return $sql . " $where_sql";
+   else
+      return $sql . " OR $where_sql";
+}
