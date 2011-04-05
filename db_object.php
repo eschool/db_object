@@ -240,7 +240,7 @@ class db_object
         }
 
         //Activates default filter for ALL fields
-        $this->filter_all_attributes('name');
+        $this->filter_all_attributes();
 
         if (is_null($id)) {
             //  No value or NULL was passed for the $id
@@ -1805,10 +1805,10 @@ class db_object
 
         //If we were passed a null value, see if that's allowed for the field,
         //and if so, return it. Otherwise, return the default
-        if($value == null and $this->table_info[$attribute]['Null'] == 'YES'){
+        if($value === null and $this->table_info[$attribute]['Null'] == 'YES'){
             return $value;
         }
-        elseif($value == null){
+        elseif($value === null){
             return $this->table_info[$attribute]['Default'];
         }
 
@@ -2055,5 +2055,3 @@ class db_object
         $this->set_callback('after_add', $method);
     }
 }
-
-?>
