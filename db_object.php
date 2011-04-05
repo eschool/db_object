@@ -240,7 +240,7 @@ class db_object
         }
 
         //Activates default filter for ALL fields
-        $this->filter_all_attributes();
+        $this->filter_all_attributes('name');
 
         if (is_null($id)) {
             //  No value or NULL was passed for the $id
