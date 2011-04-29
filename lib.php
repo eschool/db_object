@@ -699,3 +699,76 @@ function query_resource($query_string, $debug = false)
         }
     }
 }
+
+
+/**
+ * Generate a SQL UPDATE string from the given parameters
+ *
+ * The function will properly handle NULL values when NULL is passed in thru $values.
+ *
+ * @param string $table
+ * @param mixed $columns
+ * @param mixed $values
+ * @param string $where
+ * @return string $sql_string
+ */
+function get_sql_update_string($table, $columns, $values, $where)
+{
+    $sql_string = 'UPDATE `'.$table.'` SET';
+    if (is_array($columns) && sizeof($columns) > 0) {
+        $num_columns = sizeof($columns);
+        if (sizeof($values) != $num_columns) {
+            //  Whoops!  Someone passed the wrong number of values or columns
+            trigger_error('Columns array and values array sizes do not match', E_USER_ERROR);
+            return false;  //  This should never be reached
+        }
+
+        for ( $i = 0; $i < $num_columns; $i++ )
+        {
+            $column = $columns[$i];
+            $value  = $values[$i];
+
+            if ( get_magic_quotes_gpc() )
+            {
+                $column = stripslashes($column);
+
+                if ( !is_null( $value ))
+                {
+                    $value  = stripslashes($value);
+                }
+            }
+
+            $name_value_pair = ' `' . mysql_real_escape_string( $column ) . '` = ';
+
+            if ( is_null( $value ))
+            {
+                $name_value_pair .= 'NULL, ';
+            }
+            else
+            {
+                $name_value_pair .= '"' . mysql_real_escape_string( $value ) . '", ';
+            }
+
+            $sql_string .= $name_value_pair;
+        }
+
+        //  trim off the last remaining comma
+        $sql_string = substr( $sql_string, 0, -2 );
+    } else {
+        if (is_string($columns) && strlen($columns) > 0) {
+            //  $columns is a string and should be treated as one value
+            if (!is_string($values)) {
+                //  If $columns is a string, then $values must also be a string
+                throw new Exception('Values must be scalar value when columns is scalar');
+                //trigger_error('Values must be scalar value when columns is scalar', E_USER_ERROR);
+            }
+        } else {
+            //  Well, what the heck is $columns, then, if it's not a string or array?!
+            throw new Exception('Invalid value/type for columns.  Type must be array or string.');
+            //trigger_error('Invalid value/type for columns.  Type must be array or string.', E_USER_ERROR);
+        }
+    }
+    //  Tack on the "where" clause
+    $sql_string .= ' '.$where;
+    return $sql_string;
+}
