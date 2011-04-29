@@ -1,25 +1,5 @@
 <?php
 
-/**
- * This is the name of the table that contains IDs returned by get_user_id.
- * db_object uses this value to return a db_object of the updater or inserter of a record
- */
-define('USER_TABLE', 'staff');
-
-/**
- * db_object uses this function to assign the updated_by and inserted_by metadata.
- * This function should return the numeric ID of the user that changed a DB record.
- * It can return false, which will result in no change to the updated_by or inserted_by metadata.
- *
- * @author John Colvin <john.colvin@eschoolconsultants.com>
- */
-function get_user_id() {
-    if (isset($_SESSION['login_user']) && $_SESSION['login_user'] instanceof db_object) {
-        return $_SESSION['login_user']->get_id();
-    }
-    return false;
-}
-
 require_once 'db_object.php';
 require_once 'db_recordset.php';
 

@@ -328,7 +328,7 @@ class db_object
                     $time_string = date('Y-m-d H:i:s');
                     $this->set_attribute('inserted_on', $time_string, false, true, false);
                 }
-                if (false !== ($current_user_id = get_user_id())) {
+                if (false !== ($current_user_id = db_object_get_user_id())) {
                     if (is_numeric($current_user_id)) {
                         if ($this->is_acceptable_attribute('inserted_by') ) {
                             $this->set_attribute('inserted_by', $current_user_id, false, true, false);
@@ -402,7 +402,7 @@ class db_object
                     $time_string = date('Y-m-d H:i:s');
                     $this->set_attribute('updated_on', $time_string, false, true, false);
                 }
-                if (false !== ($current_user_id = get_user_id())) {
+                if (false !== ($current_user_id = db_object_get_user_id())) {
                     if (is_numeric($current_user_id)) {
                         if ($this->is_acceptable_attribute('updated_by') ) {
                             $this->set_attribute('updated_by', $current_user_id, false, true, false);
@@ -1653,7 +1653,7 @@ class db_object
         }
 
         // ensure valid foreign key
-        if ( !get_single_field_value( USER_TABLE, 'id', array( 'id' => $this->inserted_by )))
+        if ( !get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $this->inserted_by )))
         {
             return FALSE;
         }
@@ -1675,7 +1675,7 @@ class db_object
             return FALSE;
         }
 
-        if ( !get_single_field_value( USER_TABLE, 'id', array( 'id' => $this->updated_by )))
+        if ( !get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $this->updated_by )))
         {
             return FALSE;
         }
@@ -2001,8 +2001,11 @@ class db_object
         if(!preg_match('/enum/', $sql_type)){
             return false;
         }
-        $sql_type = preg_replace('/(enum[(]|[)]|\')/', '', $sql_type);
+
+        //Prune the enum( from the beginning, the ) from the end, and the string literal quotes
+        $sql_type = preg_replace('/(^enum[(]|[)]$|\')/', '', $sql_type);
         $sql_type = explode(',', $sql_type);
+
         return $sql_type;
     }
 
