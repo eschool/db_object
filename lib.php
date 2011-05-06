@@ -752,3 +752,23 @@ function get_sql_update_string($table, $columns, $values, $where)
     $sql_string .= ' '.$where;
     return $sql_string;
 }
+
+/**
+ * Tests if the given date is valid for the given format
+ *
+ * This simple test will invalidate dates ie. NULL, 0000-00-00, Feb 30, Jun 31, etc.
+ *
+ * @param str $date
+ * @param str $format
+ * @return bool
+ * @author Nick Whitt
+ */
+function is_valid_date( $date, $format='Y-m-d' )
+{
+    if ( $date != date( $format, strtotime( $date )))
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}

@@ -335,8 +335,8 @@ class db_object
                         }
                     }
                 }
-                if ($this->is_acceptable_attribute('inserted_ip')) {
-                    $this->set_attribute('inserted_ip', get_login_ip(), false, true, false);
+                if ($this->is_acceptable_attribute('inserted_ip')  && function_exists('db_object_get_user_ip')) {
+                    $this->set_attribute('inserted_ip', db_object_get_user_ip(), false, true, false);
                 }
             }
             $sql_insert_string = get_sql_insert_string($this->table_name,
@@ -409,8 +409,8 @@ class db_object
                         }
                     }
                 }
-                if ($this->is_acceptable_attribute('updated_ip')) {
-                    $this->set_attribute('updated_ip', get_login_ip(), false, true, false);
+                if ($this->is_acceptable_attribute('updated_ip') && function_exists('db_object_get_user_ip')) {
+                    $this->set_attribute('updated_ip', db_object_get_user_ip(), false, true, false);
                 }
             }
 
@@ -1658,7 +1658,7 @@ class db_object
             return FALSE;
         }
 
-        return $this->get_parent_object( 'inserted_by', 'staff' );
+        return $this->get_parent_object( 'inserted_by', DB_OBJECT_USER_TABLE );
     }
 
     /**
@@ -1680,7 +1680,7 @@ class db_object
             return FALSE;
         }
 
-        return $this->get_parent_object( 'updated_by', 'staff' );
+        return $this->get_parent_object( 'updated_by', DB_OBJECT_USER_TABLE );
     }
 
     /**
