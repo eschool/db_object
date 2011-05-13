@@ -25,17 +25,19 @@ mysql_select_db($test_db_name)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Things that must be defined in projects that use db_object and want user and IP metadata
-
-    function db_object_get_user_id() {
-        return get_single_field_value('person', 'id', array('last_name' => 'Fakerson'));
+    if (!function_exists('db_object_get_user_id')) {
+        eval("function db_object_get_user_id() {
+                  return get_single_field_value('person', 'id', array('last_name' => 'Fakerson'));
+              }");
     }
 
     define('DB_OBJECT_USER_TABLE', 'person');
 
-    function db_object_get_user_ip() {
-        return $_SERVER['REMOTE_ADDR'];
+    if (!function_exists('db_object_get_user_id')) {
+        eval('function db_object_get_user_ip() {
+                  return $_SERVER["REMOTE_ADDR"];
+              }');
     }
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 class DBRecordsetTest extends PHPUnit_Framework_TestCase
