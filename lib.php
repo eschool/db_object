@@ -583,40 +583,6 @@ function get_sql_in_string( $data, $field_name, $negative=FALSE )
 }
 
 /**
- * Simply calls mysql_query() and returns the resource.
- * The only reason I have abstracted it is to log the query in $GLOBALS['query_check'].
- *
- * @param string $query_string
- * @param boolean $debug
- * @return resource OR boolean
- * @author Bryce Thornton
- */
-function query_resource($query_string, $debug = false)
-{
-    if (is_string($query_string)) {
-        if ($debug) {
-          echo $query_string . "\n";
-        }
-
-        $result = mysql_query($query_string);
-
-        // increment query check variable for reporting purposes
-        // but first, make sure it's set
-        if (!isset($GLOBALS['query_check']['query_resource()']))
-            $GLOBALS['query_check']['query_resource()'] = 0;
-
-        $GLOBALS['query_check']['query_resource()']++;
-
-        if (is_resource($result)) {
-            return $result;
-        } else {
-            return FALSE;
-        }
-    }
-}
-
-
-/**
  * Generate a SQL UPDATE string from the given parameters
  *
  * The function will properly handle NULL values when NULL is passed in thru $values.
