@@ -12,7 +12,7 @@
  * >> phpunit test/DbObjectTest.php
  *
  * or with the .php file in the PHPUnit directory:
- * >> phpunit.php test/DbObjectTest.php
+ * >> php phpunit.php test/DbObjectTest.php
  */
 
 require_once dirname(__FILE__) . '/../lib.php';
