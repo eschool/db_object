@@ -3,17 +3,6 @@
 require_once 'db_object.php';
 require_once 'db_recordset.php';
 
-/**
- * Returns true if $var is a nonempty array, otherwise returns false
- *
- * @param mixed $var
- * @return boolean is non-empty array
- */
-function is_nonempty_array($var)
-{
-    return (isset($var) && (is_array($var) || $var instanceof ArrayAccess) && (sizeof($var) > 0));
-}
-
 function get_sql_insert_string($table, $columns, $values, $where = '') {
     $sql_string = 'INSERT INTO `'.mysql_real_escape_string($table).'`'."\n";
     if (is_array($columns) && sizeof($columns) > 0) {
@@ -372,7 +361,7 @@ function get_order_by_clause($clauses='') {
 function query($query_string, $debug = false, $key = false) {
     if (is_string($query_string)) {
         if ($debug) {
-          debug($query_string);
+          echo $query_string . "\n";
         }
         if (false !== stripos($query_string, 'DELETE')) {
             if (isset($GLOBALS['delete_queries'])) {
@@ -431,60 +420,6 @@ function get_single_field_value($table_name, $field_name, $constraints, $debug=f
         return $result[0][$field_name];
     } else {
         return false;
-    }
-}
-
-/**
- * debug is a function that "displays" any kind of variable, wrapped in <pre> tags to facilitate
- * a nice view, preformatted, mono-spaced view.
- * It is good for debugging simple variable values, objects, and arrays.
- *
- * @param string $debug_thing
- * @author Basil Mohamed Gohar <basil.gohar@eschoolconsultants.com>
- */
-function debug($debug_thing, $return = false, $nopre = false) {
-    if (defined('DEBUG')) {
-        if (DEBUG) {
-            $continue = true;
-        } else {
-            $continue = false;
-        }
-    } else {
-        $continue = true;
-    }
-
-    if ($continue) {
-        $output = '';
-        if (! $nopre && isset($_SERVER['REQUEST_METHOD'])) {
-            //  Only output "pre" tags if this is a web request
-            $output .= '<pre>';
-        }
-        if ($debug_thing === true) {
-            $output .= 'true';
-        } elseif ($debug_thing === false) {
-            $output .= 'false';
-        } elseif (is_string($debug_thing)) {
-            $output .= '"'.$debug_thing.'"';
-        } elseif (is_integer($debug_thing)) {
-            $output .= '='.$debug_thing;
-        } elseif (is_null($debug_thing)) {
-            $output .= 'null';
-        } elseif (empty($debug_thing)) {
-            $output .= 'Empty!';
-        } else {
-            $output .= print_r($debug_thing, true);
-        }
-        if (! $nopre && isset($_SERVER['REQUEST_METHOD'])) {
-            $output .=  '</pre>';
-        }
-        $output .= "\n";
-
-        if ($return) {
-            return $output;
-        } else {
-            echo $output;
-            flush();
-        }
     }
 }
 
@@ -660,7 +595,7 @@ function query_resource($query_string, $debug = false)
 {
     if (is_string($query_string)) {
         if ($debug) {
-          debug($query_string);
+          echo $query_string . "\n";
         }
 
         $result = mysql_query($query_string);
@@ -751,24 +686,4 @@ function get_sql_update_string($table, $columns, $values, $where)
     //  Tack on the "where" clause
     $sql_string .= ' '.$where;
     return $sql_string;
-}
-
-/**
- * Tests if the given date is valid for the given format
- *
- * This simple test will invalidate dates ie. NULL, 0000-00-00, Feb 30, Jun 31, etc.
- *
- * @param str $date
- * @param str $format
- * @return bool
- * @author Nick Whitt
- */
-function is_valid_date( $date, $format='Y-m-d' )
-{
-    if ( $date != date( $format, strtotime( $date )))
-    {
-        return FALSE;
-    }
-
-    return TRUE;
 }

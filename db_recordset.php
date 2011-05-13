@@ -117,8 +117,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     public function __construct( $table_name=NULL, $constraints=NULL, $autodiscover_class=TRUE, $sort_order=NULL, $array_key_field_name=NULL, $include_deleted=FALSE )
     {
-        $this->debug_this_method('__construct');
-
         if (strlen(trim($table_name)) == 0) {
             throw new Exception('Table name cannot be empty');
         }
@@ -199,8 +197,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     public function set_recordset_limit($limit, $offset=NULL)
     {
-        $this->debug_this_method('set_recordset_limit');
-
         if ($limit < 1)
         {
             throw new Exception('Limit must be greater than 0');
@@ -233,8 +229,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     protected function fetch_data($record_ids_to_add=NULL)
     {
-        $this->debug_this_method('fetch_data');
-
         if ($this->dirty_data === false)
             return;
 
@@ -334,8 +328,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     protected function fetch_db_object($id = NULL)
     {
-        $this->debug_this_method('fetch_db_object');
-
         // If an id was passed
         if ($id != NULL)
             $this->fetch_row($id);
@@ -359,8 +351,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     protected function fetch_row($id = NULL)
     {
-        $this->debug_this_method('fetch_row');
-
         // Make sure the array is populated if they pass an ID
         // We only want to create the array if we HAVE to. (for memory reasons)
         if ($id != NULL)
@@ -429,8 +419,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     protected function refresh_index()
     {
-        $this->debug_this_method('refresh_index');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
 
@@ -462,8 +450,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     public function set_constraints($constraints)
     {
-        $this->debug_this_method('set_constraints');
-
         if ($this->constraints != NULL)
         {
             if ($this->dirty_data === true)
@@ -499,8 +485,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function offsetExists($offset)
     {
-        $this->debug_this_method('offsetExists');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
         if ($this->dirty_index === true)
@@ -511,8 +495,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function offsetGet($offset)
     {
-        $this->debug_this_method('offsetGet');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
         if ($this->dirty_index === true)
@@ -526,16 +508,12 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function offsetSet($offset, $value)
     {
-        $this->debug_this_method('offsetSet');
-
         throw new Exception('Recordsets cannot be appended to at this time');
         return false;
     }
 
     public function offsetUnset($offset)
     {
-        $this->debug_this_method('offsetUnset');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
         if ($this->dirty_index === true)
@@ -561,8 +539,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function rewind()
     {
-        $this->debug_this_method('rewind');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
 
@@ -580,8 +556,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function key()
     {
-        $this->debug_this_method('key');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
 
@@ -590,8 +564,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function current()
     {
-        $this->debug_this_method('current');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
 
@@ -600,8 +572,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function next()
     {
-        $this->debug_this_method('next');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
 
@@ -611,8 +581,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function valid()
     {
-        $this->debug_this_method('valid');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
 
@@ -625,8 +593,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
     public function count()
     {
-        $this->debug_this_method('count');
-
         if ($this->dirty_data === true)
             $this->fetch_data();
 
@@ -650,8 +616,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     public function get_field_values($field='')
     {
-        $this->debug_this_method('get_field_values');
-
         if ($field == '')
         {
             $field = $this->primary_key_field_name;
@@ -697,39 +661,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
     public function get_recordset()
     {
         return $this->get_field_values();
-    }
-
-    /**
-     * This method will output debug info if the constant RS_DEBUG is set.
-     * It should be called from another METHOD in a db_recordset class.
-     *
-     * @return bool
-     * @author Bryce Thornton
-     **/
-    protected function debug_this_method($method_name)
-    {
-        if (defined('RS_DEBUG'))
-        {
-            echo "<b>Calling $method_name in the ".get_class($this)." class.</b><br/>\n";
-
-            if (defined('RS_DEBUG_VARS'))
-            {
-                if (strlen(trim(RS_DEBUG_VARS)) > 0)
-                    $debug_output_vars = explode(',', RS_DEBUG_VARS);
-            }
-
-            if (is_array($debug_output_vars))
-            {
-                foreach($debug_output_vars as $attribute_name)
-                {
-                    echo "Value of $attribute_name is: \n";
-                    debug($this->$attribute_name);
-                }
-            }
-
-        }
-        else
-            return false;
     }
 
     /**

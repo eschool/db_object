@@ -183,7 +183,7 @@ class db_object
         $this->metadata_fields = array();
         $this->metadata_field_override = array();
 
-        if (is_nonempty_array($table_info)) {
+        if ((isset($table_info) && (is_array($table_info) || $table_info instanceof ArrayAccess) && (sizeof($table_info) > 0))) {
             //  Utilize the dry-instantiated $table_info rather than retrieving it from
             //  session or the database
             $this->table_info = $table_info;
@@ -195,7 +195,7 @@ class db_object
                 /**
                  * Check to see whether or not the table information is cached in the session
                  */
-                if (@is_nonempty_array(($_SESSION['table_column_cache'][$table_name]))) {
+                if ((isset($_SESSION['table_column_cache'][$table_name]) && (is_array($_SESSION['table_column_cache'][$table_name]) || $_SESSION['table_column_cache'][$table_name] instanceof ArrayAccess) && (sizeof($_SESSION['table_column_cache'][$table_name]) > 0))) {
                     /**
                      * Retrieve the table information from the session cache (this saves a query)
                      */
@@ -244,7 +244,7 @@ class db_object
 
         if (is_null($id)) {
             //  No value or NULL was passed for the $id
-            if (is_nonempty_array($attributes)) {
+            if ((isset($attributes) && (is_array($attributes) || $attributes instanceof ArrayAccess) && (sizeof($attributes) > 0))) {
                 //  Use the dry-instantiated $attributes value
                 $this->attributes = $attributes;
                 return true;
@@ -1718,16 +1718,14 @@ class db_object
      */
     public function get_editor_time( $format='Y-m-d' )
     {
-        if ( in_array( 'updated_on', $this->metadata_fields ) and is_valid_date( $this->updated_on, 'Y-m-d H:i:s' ))
-        {
+        if ( in_array( 'updated_on', $this->metadata_fields ) and ($date == date('Y-m-d H:i:s', strtotime($this->updated_on)))) {
             return date( $format, strtotime( $this->updated_on ));
         }
-        elseif ( in_array( 'inserted_on', $this->metadata_fields ) and is_valid_date( $this->inserted_on, 'Y-m-d H:i:s' ))
-        {
+        elseif ( in_array( 'inserted_on', $this->metadata_fields ) and ($date == date('Y-m-d H:i:s', strtotime($this->inserted_on)))) {
             return date( $format, strtotime( $this->inserted_on ));
         }
 
-        return FALSE;
+        return false;
     }
 
     /******************************************************************************
