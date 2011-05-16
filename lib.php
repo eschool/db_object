@@ -181,8 +181,6 @@ function get_select_clause($fields='*') {
  * assumed to be an "and" clause if not specified otherwise. The fields are neither
  * quoted nor escaped by the function, so they must be valid before being passed.
  *
- * @todo This function depends heavily on both add_and_to_sql() and add_or_to_sql()
- * which currently reside in sis_lib. Both should be moved to data_lib.
  * @todo Figure a way to quote and escape the fields.
  *
  * @param array $clauses
@@ -204,15 +202,30 @@ function get_where_clause($clauses='1=1') {
 
         if (strtoupper(substr($clause, 0, 6)) == 'WHERE ') {
             $clause = trim(substr($clause, 6));
-        } elseif (strtoupper(substr($clause, 0, 4 )) == 'AND ') {
+        }
+        elseif (strtoupper(substr($clause, 0, 4 )) == 'AND ') {
             $clause = trim(substr($clause, 4));
-        } elseif (strtoupper(substr($clause, 0, 3)) == 'OR ') {
+        }
+        elseif (strtoupper(substr($clause, 0, 3)) == 'OR ') {
             $clause = trim(substr($clause, 3));
-            $where = add_or_to_sql($where, $clause);
+
+            $trimmed_sql = trim($where);
+            if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -2)) == 'OR') or (substr($trimmed_sql, -1) == '(')) {
+                $where .= " $clause";
+            }
+            else {
+                $where .= " OR $clause";
+            }
             continue;
         }
 
-        $where = add_and_to_sql($where, $clause);
+        $trimmed_sql = trim($where);
+        if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -3)) == 'AND') or substr($trimmed_sql, -1) == '(') {
+            $where .= " $clause";
+        }
+        else {
+            $where .= " AND $clause";
+        }
     }
 
     return $where;
@@ -478,44 +491,6 @@ function get_where_clause_from_constraints($constraints = null)
     }
 
     return $where_clause;
-}
-
-/**
- * This function adds an "AND" to a SQL string if it needs it.  This is
- * handy if you are appending a lot of SQL together but aren't keeping
- * track of the exact where clauses that are being added.
- *
- * Paramters:
- *  $sql          = This is the sql statement up to the point where you want to add
- *                another where clause.
- *  $where_sql    = This is the where clause you want to add.
- */
-function add_and_to_sql($sql, $where_sql)
-{
-   $trimmed_sql = trim($sql);
-   if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -3)) == 'AND') or substr($trimmed_sql, -1) == '(')
-      return $sql . " $where_sql";
-   else
-      return $sql . " AND $where_sql";
-}
-
-/**
- * This function adds an "OR" to a SQL string if it needs it.  This is
- * handy if you are appending a lot of SQL together but aren't keeping
- * track of the exact where clauses that are being added.
- *
- * Paramters:
- *  $sql          = This is the sql statement up to the point where you want to add
- *                another where clause.
- *  $where_sql    = This is the where clause you want to add.
- */
-function add_or_to_sql($sql, $where_sql)
-{
-   $trimmed_sql = trim($sql);
-   if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -2)) == 'OR') or (substr($trimmed_sql, -1) == '('))
-      return $sql . " $where_sql";
-   else
-      return $sql . " OR $where_sql";
 }
 
 function get_sql_where_string($field_name, $value, $operator='=')
