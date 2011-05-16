@@ -1718,10 +1718,10 @@ class db_object
      */
     public function get_editor_time( $format='Y-m-d' )
     {
-        if ( in_array( 'updated_on', $this->metadata_fields ) and ($date == date('Y-m-d H:i:s', strtotime($this->updated_on)))) {
+        if ( in_array( 'updated_on', $this->metadata_fields ) and ($this->updated_on == date('Y-m-d H:i:s', strtotime($this->updated_on)))) {
             return date( $format, strtotime( $this->updated_on ));
         }
-        elseif ( in_array( 'inserted_on', $this->metadata_fields ) and ($date == date('Y-m-d H:i:s', strtotime($this->inserted_on)))) {
+        elseif ( in_array( 'inserted_on', $this->metadata_fields ) and ($this->inserted_on == date('Y-m-d H:i:s', strtotime($this->inserted_on)))) {
             return date( $format, strtotime( $this->inserted_on ));
         }
 
