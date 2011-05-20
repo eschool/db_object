@@ -3,67 +3,6 @@
 require_once 'db_object.php';
 require_once 'db_recordset.php';
 
-function get_sql_insert_string($table, $columns, $values, $where = '') {
-    $sql_string = 'INSERT INTO `'.mysql_real_escape_string($table).'`'."\n";
-    if (is_array($columns) && sizeof($columns) > 0) {
-        $num_columns = sizeof($columns);
-        if (sizeof($values) != $num_columns) {
-            //  Whoops!  Someone passed the wrong number of values or columns
-            trigger_error('Columns array and values array sizes do not match', E_USER_ERROR);
-            return false; //  This should never be reached
-        }
-    }
-    $sql_string .= ' (';
-    $column_array = array();
-
-    //  Generate the columns list
-    for ($i = 0; $i < $num_columns; $i++) {
-
-        // Skip this column if the value is NULL
-        if (is_null($values[$i]))
-            continue;
-
-        $column = $columns[$i];
-        if (get_magic_quotes_gpc()) {
-            $column = stripslashes($column);
-        }
-        $column_array[] .= '`'.mysql_real_escape_string($column).'`';
-    }
-    //  Strip off the last, unnecessary comma
-    $sql_string .= implode(',', $column_array);
-    $sql_string .= ') VALUES (';
-    $value_array = array();
-
-    //  Generate the values list
-    for ($i = 0; $i < $num_columns; $i++)
-    {
-        $value = $values[$i];
-
-        // Skip this column if the value is NULL
-        if ( is_null( $value ))
-        {
-            continue;
-        }
-        else
-        {
-            if ( get_magic_quotes_gpc() )
-            {
-                $value = stripslashes( $value );
-            }
-
-            $value_array[] = '"' . mysql_real_escape_string( $value ) . '"';
-        }
-    }
-
-    //  Strip off the last, unnecessary comma
-    $sql_string .= implode(',', $value_array);
-
-    $sql_string .= ') ';
-    //  Tack on the "where" clause
-    $sql_string .= $where;
-    return $sql_string;
-}
-
 /**
  * Returns a basic query of the form "SELECT FROM WHERE"
  *
@@ -79,7 +18,42 @@ function get_sql_insert_string($table, $columns, $values, $where = '') {
  * @author Nick Whitt
  */
 function get_sql($tables, $fields='*', $where_clause='', $order_by='', $group_by='', $limit_by='') {
-    $select = get_select_clause($fields);
+    if (! is_array($fields)) {
+        $fields = array($fields);
+    }
+
+    if (in_array($fields[0], array('', '*'))) {
+        $select = 'SELECT * ';
+    }
+    else {
+        $select = '';
+        foreach ($fields as $field) {
+            if ($select == '') {
+                $select = 'SELECT ';
+            } else {
+                $select .= ', ';
+            }
+
+            if (strpos($field, '(')) {
+                $select .= mysql_real_escape_string(str_replace(array('(', ')', '.'), array('(`', '`)', '`.`'), $field));
+            } else {
+                if (strpos($field, '*'))
+                {
+                    $search = array('.');
+                    $replace = array('`.');
+
+                    $select .= '`' . mysql_real_escape_string(str_replace($search, $replace, $field));
+                }
+                else
+                {
+                    $search = array('.', ' as ', ' AS ');
+                    $replace = array('`.`', '` AS `', '` AS `');
+
+                    $select .= '`' . mysql_real_escape_string(str_replace($search, $replace, $field)) . '`';
+                }
+            }
+        }
+    }
 
     if (! is_array($tables)) {
         $tables = array($tables);
@@ -98,18 +72,114 @@ function get_sql($tables, $fields='*', $where_clause='', $order_by='', $group_by
 
     $where = '';
     if ($where_clause != '') {
-        $where = get_where_clause($where_clause);
+
+        $where_clauses = $where_clause;
+        if (! is_array($where_clauses)) {
+            $where_clauses = array($where_clauses);
+        }
+
+        if (! isset($where_clauses[0]) || $where_clauses[0] == '') {
+            $where = ' WHERE 1=1';
+        }
+        else {
+            $where = ' WHERE ';
+            foreach ($where_clauses as $where_clause) {
+                $where_clause = trim($where_clause);
+
+                if (strtoupper(substr($where_clause, 0, 6)) == 'WHERE ') {
+                    $where_clause = trim(substr($where_clause, 6));
+                }
+                elseif (strtoupper(substr($where_clause, 0, 4 )) == 'AND ') {
+                    $where_clause = trim(substr($where_clause, 4));
+                }
+                elseif (strtoupper(substr($where_clause, 0, 3)) == 'OR ') {
+                    $where_clause = trim(substr($where_clause, 3));
+
+                    $trimmed_sql = trim($where);
+                    if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -2)) == 'OR') or (substr($trimmed_sql, -1) == '(')) {
+                        $where .= " $where_clause";
+                    }
+                    else {
+                        $where .= " OR $where_clause";
+                    }
+                    continue;
+                }
+
+                $trimmed_sql = trim($where);
+                if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -3)) == 'AND') or substr($trimmed_sql, -1) == '(') {
+                    $where .= " $where_clause";
+                }
+                else {
+                    $where .= " AND $where_clause";
+                }
+            }
+        }
         $sql .= "\n".$where;
+
     }
 
     if ($group_by != '') {
-        $group_by = get_group_by_clause($group_by);
-        $sql .= "\n".$group_by;
+        if (! is_array($group_by)) {
+            $group_by = array($group_by);
+        }
+
+        if ($group_by[0] == '') {
+            $group_by_clause = '';
+        }
+        else {
+            $group_by_clause = '';
+            foreach ($group_by as $group_by_part) {
+                if ($group_by_clause == '') {
+                    $group_by_clause = ' GROUP BY ';
+                } else {
+                    $group_by_clause .= ', ';
+                }
+
+                $group_by_clause .= '`'.mysql_real_escape_string(str_replace('.', '`.`', $group_by_part)).'`';
+            }
+        }
+
+        $sql .= "\n".$group_by_clause;
     }
 
     if ($order_by != '') {
-        $order_by = get_order_by_clause($order_by);
-        $sql .= "\n".$order_by;
+        if (! is_array($order_by)) {
+            $order_by = array($order_by);
+        }
+
+        $order_by_clause = '';
+        if (!empty($order_by[0])) {
+            $order_by_clause = '';
+            foreach ($order_by as $order_by_part) {
+                if (! is_array($order_by_part)) {
+                    $order_by_part = array($order_by_part);
+                }
+
+                if ($order_by_clause == '') {
+                    $order_by_clause = ' ORDER BY ';
+                } else {
+                    $order_by_clause .= ', ';
+                }
+
+                //$order_by .= '`'.mysql_real_escape_string(str_replace('.', '`.`', $order_by_part[0])).'`';
+
+                if (strpos($order_by_part[0], '(')) {
+                    $order_by_clause .= mysql_real_escape_string(str_replace(array('(', ')', '.'), array('(`', '`)', '`.`'), $order_by_part[0]));
+                } else {
+                    $order_by_clause .= '`'.mysql_real_escape_string(str_replace('.', '`.`', $order_by_part[0])).'`';
+                }
+
+                if (isset($order_by_part[1])) {
+                    if (strtolower($order_by_part[1]) == 'desc') {
+                        $order_by_clause .= ' DESC ';
+                    } else {
+                        $order_by_clause .= ' ASC ';
+                    }
+                }
+            }
+        }
+
+        $sql .= "\n".$order_by_clause;
     }
 
     if ($limit_by != '') {
@@ -119,209 +189,6 @@ function get_sql($tables, $fields='*', $where_clause='', $order_by='', $group_by
 
     return $sql;
 }
-
-/**
- * Returns the "select" string for the sql statement
- *
- * The fields are automatically quoted and escaped by the function. MYSQL functions
- * can be passed as array elements. For example:
- *
- *     get_select_clause(array("student_id AS student", "DISTINCT(entering_grade)"));
- *
- * returns the string "SELECT `student_id` AS `student`, DISTINCT(`entering_grade`)".
- *
- * @param array $fields
- * @return str
- * @author Nick Whitt
- */
-function get_select_clause($fields='*') {
-    if (! is_array($fields)) {
-        $fields = array($fields);
-    }
-
-    if (in_array($fields[0], array('', '*'))) {
-        return 'SELECT * ';
-    }
-
-    $select = '';
-    foreach ($fields as $field) {
-        if ($select == '') {
-            $select = 'SELECT ';
-        } else {
-            $select .= ', ';
-        }
-
-        if (strpos($field, '(')) {
-            $select .= mysql_real_escape_string(str_replace(array('(', ')', '.'), array('(`', '`)', '`.`'), $field));
-        } else {
-            if (strpos($field, '*'))
-            {
-                $search = array('.');
-                $replace = array('`.');
-
-                $select .= '`' . mysql_real_escape_string(str_replace($search, $replace, $field));
-            }
-            else
-            {
-                $search = array('.', ' as ', ' AS ');
-                $replace = array('`.`', '` AS `', '` AS `');
-
-                $select .= '`' . mysql_real_escape_string(str_replace($search, $replace, $field)) . '`';
-            }
-        }
-    }
-
-    return $select;
-}
-
-/**
- * Returns the "where" string for the sql statement
- *
- * Each value in the clauses array is a seporate where clause. Each clause is
- * assumed to be an "and" clause if not specified otherwise. The fields are neither
- * quoted nor escaped by the function, so they must be valid before being passed.
- *
- * @todo Figure a way to quote and escape the fields.
- *
- * @param array $clauses
- * @return str
- * @author Nick Whitt
- */
-function get_where_clause($clauses='1=1') {
-    if (! is_array($clauses)) {
-        $clauses = array($clauses);
-    }
-
-    if (! isset($clauses[0]) || $clauses[0] == '') {
-        return ' WHERE 1=1';
-    }
-
-    $where = ' WHERE ';
-    foreach ($clauses as $clause) {
-        $clause = trim($clause);
-
-        if (strtoupper(substr($clause, 0, 6)) == 'WHERE ') {
-            $clause = trim(substr($clause, 6));
-        }
-        elseif (strtoupper(substr($clause, 0, 4 )) == 'AND ') {
-            $clause = trim(substr($clause, 4));
-        }
-        elseif (strtoupper(substr($clause, 0, 3)) == 'OR ') {
-            $clause = trim(substr($clause, 3));
-
-            $trimmed_sql = trim($where);
-            if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -2)) == 'OR') or (substr($trimmed_sql, -1) == '(')) {
-                $where .= " $clause";
-            }
-            else {
-                $where .= " OR $clause";
-            }
-            continue;
-        }
-
-        $trimmed_sql = trim($where);
-        if ((strtoupper(substr($trimmed_sql, -5)) == 'WHERE') or (strtoupper(substr($trimmed_sql, -3)) == 'AND') or substr($trimmed_sql, -1) == '(') {
-            $where .= " $clause";
-        }
-        else {
-            $where .= " AND $clause";
-        }
-    }
-
-    return $where;
-}
-
-/**
- * Returns the "group by" string for the sql statement
- *
- * The fields are automatically quoted and escaped by the function.
- *
- * @param array $clauses
- * @return str
- * @author Nick Whitt
- */
-function get_group_by_clause($clauses='') {
-    if (! is_array($clauses)) {
-        $clauses = array($clauses);
-    }
-
-    if ($clauses[0] == '') {
-        return false;
-    }
-
-    $group_by = '';
-    foreach ($clauses as $clause) {
-        if ($group_by == '') {
-            $group_by = ' GROUP BY ';
-        } else {
-            $group_by .= ', ';
-        }
-
-        $group_by .= '`'.mysql_real_escape_string(str_replace('.', '`.`', $clause)).'`';
-    }
-
-    return $group_by;
-}
-
-/**
- * Returns the "order by" string for the sql statement
- *
- * Each value in the clauses array can be either a string or an array. By default,
- * the clauses are sorted in ascending order. To override this, pass the sort order
- * as the second array value of each clause in the clauses array. For example:
- *
- *      get_order_by_clause(array(array('last_name', 'desc'), 'first_name'));
- *
- * returns the string " ORDER BY `last_name` DESC , `first_name` ".
- *
- * The fields are automatically quoted and escaped by the function.
- *
- * @param array $clauses
- * @return str
- * @author Nick Whitt
- */
-function get_order_by_clause($clauses='') {
-    if (! is_array($clauses)) {
-        $clauses = array($clauses);
-    }
-
-    if (empty($clauses[0])) {
-        return false;
-    }
-
-    $order_by = '';
-    foreach ($clauses as $clause) {
-        if (! is_array($clause)) {
-            $clause = array($clause);
-        }
-
-        if ($order_by == '') {
-            $order_by = ' ORDER BY ';
-        } else {
-            $order_by .= ', ';
-        }
-
-        //$order_by .= '`'.mysql_real_escape_string(str_replace('.', '`.`', $clause[0])).'`';
-
-        if (strpos($clause[0], '(')) {
-            $order_by .= mysql_real_escape_string(str_replace(array('(', ')', '.'), array('(`', '`)', '`.`'), $clause[0]));
-        } else {
-            $order_by .= '`'.mysql_real_escape_string(str_replace('.', '`.`', $clause[0])).'`';
-        }
-
-        if (isset($clause[1])) {
-            if (strtolower($clause[1]) == 'desc') {
-                $order_by .= ' DESC ';
-            } else {
-                $order_by .= ' ASC ';
-            }
-        }
-    }
-
-    return $order_by;
-}
-
-
 
 /**
  * query is a wrapper for mysql_query and mysql_fetch_assoc, which does basically what
@@ -474,41 +341,36 @@ function get_where_clause_from_constraints($constraints = null)
                         throw new Exception( 'Invalid constraint values' );
                     }
                 }
-
                 // attempt to create a query using operators such as "<" or ">="
-                elseif ( $clause = get_sql_where_string( $field, $values, $operator ))
-                {
-                    $where_clause[] = $clause;
-                }
+                else {
+                    $value = $values;
 
-                // report error
-                else
-                {
-                    throw new Exception( 'Uknown constraint' );
+                    $field = trim($field);
+                    $value = trim($value);
+                    $operator = trim($operator);
+
+                    $clause = mysql_real_escape_string($field) . " $operator ";
+
+                    if (false !== strpos($value, "'", 0) && false !== strpos($value, "'", strlen($value) - 1)) {
+                        //  Value is already quoted
+                        $clause .= $value;
+                    }
+                    else {
+                        $clause .= "'" . $value . "'";
+                    }
+
+                    if (empty($clause)) {
+                        throw new Exception('Uknown constraint');
+                    }
+                    else {
+                        $where_clause[] = $clause;
+                    }
                 }
             }
         }
     }
 
     return $where_clause;
-}
-
-function get_sql_where_string($field_name, $value, $operator='=')
-{
-    $field_name = trim($field_name);
-    $value = trim($value);
-    $operator = trim($operator);
-
-    $sql_string = mysql_real_escape_string($field_name) . " $operator ";
-
-    if (false !== strpos($value, "'", 0) && false !== strpos($value, "'", strlen($value) - 1)) {
-        //  Value is already quoted
-        $sql_string .= $value;
-    } else {
-        $sql_string .= "'" . $value . "'";
-    }
-
-    return $sql_string;
 }
 
 /**
@@ -554,77 +416,5 @@ function get_sql_in_string( $data, $field_name, $negative=FALSE )
         $sql_string = mysql_real_escape_string( $field_name ) . ' NOT IN (' . $in_string . ')';
     }
 
-    return $sql_string;
-}
-
-/**
- * Generate a SQL UPDATE string from the given parameters
- *
- * The function will properly handle NULL values when NULL is passed in thru $values.
- *
- * @param string $table
- * @param mixed $columns
- * @param mixed $values
- * @param string $where
- * @return string $sql_string
- */
-function get_sql_update_string($table, $columns, $values, $where)
-{
-    $sql_string = 'UPDATE `'.$table.'` SET';
-    if (is_array($columns) && sizeof($columns) > 0) {
-        $num_columns = sizeof($columns);
-        if (sizeof($values) != $num_columns) {
-            //  Whoops!  Someone passed the wrong number of values or columns
-            trigger_error('Columns array and values array sizes do not match', E_USER_ERROR);
-            return false;  //  This should never be reached
-        }
-
-        for ( $i = 0; $i < $num_columns; $i++ )
-        {
-            $column = $columns[$i];
-            $value  = $values[$i];
-
-            if ( get_magic_quotes_gpc() )
-            {
-                $column = stripslashes($column);
-
-                if ( !is_null( $value ))
-                {
-                    $value  = stripslashes($value);
-                }
-            }
-
-            $name_value_pair = ' `' . mysql_real_escape_string( $column ) . '` = ';
-
-            if ( is_null( $value ))
-            {
-                $name_value_pair .= 'NULL, ';
-            }
-            else
-            {
-                $name_value_pair .= '"' . mysql_real_escape_string( $value ) . '", ';
-            }
-
-            $sql_string .= $name_value_pair;
-        }
-
-        //  trim off the last remaining comma
-        $sql_string = substr( $sql_string, 0, -2 );
-    } else {
-        if (is_string($columns) && strlen($columns) > 0) {
-            //  $columns is a string and should be treated as one value
-            if (!is_string($values)) {
-                //  If $columns is a string, then $values must also be a string
-                throw new Exception('Values must be scalar value when columns is scalar');
-                //trigger_error('Values must be scalar value when columns is scalar', E_USER_ERROR);
-            }
-        } else {
-            //  Well, what the heck is $columns, then, if it's not a string or array?!
-            throw new Exception('Invalid value/type for columns.  Type must be array or string.');
-            //trigger_error('Invalid value/type for columns.  Type must be array or string.', E_USER_ERROR);
-        }
-    }
-    //  Tack on the "where" clause
-    $sql_string .= ' '.$where;
     return $sql_string;
 }

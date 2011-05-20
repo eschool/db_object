@@ -339,15 +339,66 @@ class db_object
                     $this->set_attribute('inserted_ip', db_object_get_user_ip(), false, true, false);
                 }
             }
-            $sql_insert_string = get_sql_insert_string($this->table_name,
-                                                        array_keys($this->attributes),
-                                                        array_values($this->attributes));
+
+            $columns = array_keys($this->attributes);
+            $values = array_values($this->attributes);
+
+            $sql_string = 'INSERT INTO `'.mysql_real_escape_string($this->table_name).'`'."\n";
+            if (is_array($columns) && sizeof($columns) > 0) {
+                $num_columns = sizeof($columns);
+                if (sizeof($values) != $num_columns) {
+                    //  Whoops!  Someone passed the wrong number of values or columns
+                    throw new Exception('Columns array and values array sizes do not match');
+                }
+            }
+            $sql_string .= ' (';
+            $column_array = array();
+
+            //  Generate the columns list
+            for ($i = 0; $i < $num_columns; $i++) {
+
+                // Skip this column if the value is NULL
+                if (is_null($values[$i]))
+                    continue;
+
+                $column = $columns[$i];
+                if (get_magic_quotes_gpc()) {
+                    $column = stripslashes($column);
+                }
+                $column_array[] .= '`'.mysql_real_escape_string($column).'`';
+            }
+            //  Strip off the last, unnecessary comma
+            $sql_string .= implode(',', $column_array);
+            $sql_string .= ') VALUES (';
+            $value_array = array();
+
+            //  Generate the values list
+            for ($i = 0; $i < $num_columns; $i++) {
+                $value = $values[$i];
+
+                // Skip this column if the value is NULL
+                if ( is_null( $value )) {
+                    continue;
+                }
+                else {
+                    if ( get_magic_quotes_gpc() ) {
+                        $value = stripslashes( $value );
+                    }
+
+                    $value_array[] = '"' . mysql_real_escape_string( $value ) . '"';
+                }
+            }
+
+            //  Strip off the last, unnecessary comma
+            $sql_string .= implode(',', $value_array);
+
+            $sql_string .= ')';
 
             // Call the callbacks
             $this->execute_callbacks('before_save');
             $this->execute_callbacks('before_add');
 
-            if (query($sql_insert_string)) {
+            if (query($sql_string)) {
                 /**
                  * Retrieve the auto_incremented primary key
                  */
@@ -414,16 +465,68 @@ class db_object
                 }
             }
 
-            $sql_update_string = get_sql_update_string($this->table_name,
-                                                        array_keys($this->modified_attributes),
-                                                        array_values($this->modified_attributes),
-                                                        "WHERE `" . $this->primary_key_field . "` = '" . $this->get_attribute($this->primary_key_field) . "'");
+            $columns = array_keys($this->modified_attributes);
+            $values = array_values($this->modified_attributes);
+
+            $sql_string = 'UPDATE `'.$this->table_name.'` SET';
+            if (is_array($columns) && sizeof($columns) > 0) {
+                $num_columns = sizeof($columns);
+                if (sizeof($values) != $num_columns) {
+                    //  Whoops!  Someone passed the wrong number of values or columns
+                    throw new Exception('Columns array and values array sizes do not match');
+                }
+
+                for ( $i = 0; $i < $num_columns; $i++ ) {
+                    $column = $columns[$i];
+                    $value  = $values[$i];
+
+                    if ( get_magic_quotes_gpc() ) {
+                        $column = stripslashes($column);
+
+                        if ( !is_null( $value )) {
+                            $value  = stripslashes($value);
+                        }
+                    }
+
+                    $name_value_pair = ' `' . mysql_real_escape_string( $column ) . '` = ';
+
+                    if ( is_null( $value )) {
+                        $name_value_pair .= 'NULL, ';
+                    }
+                    else {
+                        $name_value_pair .= '"' . mysql_real_escape_string( $value ) . '", ';
+                    }
+
+                    $sql_string .= $name_value_pair;
+                }
+
+                //  trim off the last remaining comma
+                $sql_string = substr( $sql_string, 0, -2 );
+            }
+            else {
+                if (is_string($columns) && strlen($columns) > 0) {
+                    //  $columns is a string and should be treated as one value
+                    if (!is_string($values)) {
+                        //  If $columns is a string, then $values must also be a string
+                        throw new Exception('Values must be scalar value when columns is scalar');
+                        //trigger_error('Values must be scalar value when columns is scalar', E_USER_ERROR);
+                    }
+                }
+                else {
+                    //  Well, what the heck is $columns, then, if it's not a string or array?!
+                    throw new Exception('Invalid value/type for columns.  Type must be array or string.');
+                    //trigger_error('Invalid value/type for columns.  Type must be array or string.', E_USER_ERROR);
+                }
+            }
+
+            //  Tack on the "where" clause
+            $sql_string .= " WHERE `" . $this->primary_key_field . "` = '" . $this->get_attribute($this->primary_key_field) . "'";
 
             // Call the callbacks
             $this->execute_callbacks('before_save');
             $this->execute_callbacks('before_update');
 
-            if (query($sql_update_string)) {
+            if (query($sql_string)) {
                 $this->modified_attributes = array();
 
                 // Call the callbacks
