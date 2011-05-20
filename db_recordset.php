@@ -277,7 +277,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
             $limit_by .= $this->limit;
         }
 
-        $this->sql = get_sql($this->table_name, '*', $where_clause, $sort_array, '', $limit_by);
+        $this->sql = db_object::get_sql($this->table_name, '*', $where_clause, $sort_array, '', $limit_by);
         $this->db_result = mysql_query($this->sql);
 
         //  Final initialization of data & setting of current state

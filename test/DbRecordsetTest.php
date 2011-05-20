@@ -75,7 +75,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testGetFieldValuesMethod()
     {
-        $rset = db_object::query( get_sql( 'fruits', 'name' ));
+        $rset = db_object::query( db_object::get_sql( 'fruits', 'name' ));
 
         $ids = array();
 
@@ -94,7 +94,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testArrayAccessMethods()
     {
-        $rset = db_object::query( get_sql( 'fruits', 'MAX(id)' ));
+        $rset = db_object::query( db_object::get_sql( 'fruits', 'MAX(id)' ));
         $id   = $rset[0]['MAX(`id`)'];
 
         $this->assertEquals( $this->recordset[$id]->get_id(), $id );
@@ -102,7 +102,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testCountMethod()
     {
-        $rset  = db_object::query( get_sql( 'fruits', 'COUNT(id)' ));
+        $rset  = db_object::query( db_object::get_sql( 'fruits', 'COUNT(id)' ));
         $count = $rset[0]['COUNT(`id`)'];
 
         $this->assertEquals( count( $this->recordset ), $count );
@@ -124,7 +124,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testConditionalInstantiation()
     {
-        $rset = db_object::query( get_sql( 'fruits', 'id', '`color` = "red"' ));
+        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '`color` = "red"' ));
 
         $ids = array();
 
@@ -141,7 +141,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testOrderedInstantiation()
     {
-        $rset = db_object::query( get_sql( 'fruits', 'id', '', array( array( 'name', 'ASC' ))));
+        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '', array( array( 'name', 'ASC' ))));
 
         $ids = array();
 
@@ -182,7 +182,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testInstantiationWithAlternateKeys()
     {
-        $rset = db_object::query( get_sql( 'fruits', array( 'id', 'name' ), '', '', '', 1 ));
+        $rset = db_object::query( db_object::get_sql( 'fruits', array( 'id', 'name' ), '', '', '', 1 ));
         $id   = $rset[0]['id'];
         $name = $rset[0]['name'];
 
@@ -195,7 +195,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testSetConstraintsMethod()
     {
-        $rset = db_object::query( get_sql( 'fruits', 'id', '`color` = "red"' ));
+        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '`color` = "red"' ));
 
         $ids = array();
 
@@ -211,7 +211,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testSetRecordsetLimitMethodNoOffset()
     {
-        $rset = db_object::query( get_sql( 'fruits', 'id', '', '', '', 2 ));
+        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '', '', '', 2 ));
 
         $ids = array();
 
@@ -227,7 +227,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testSetRecordsetLimitMethodWithOffset()
     {
-        $rset = db_object::query( get_sql( 'fruits', 'id', '`id` > 2', '', '', 1 ));
+        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '`id` > 2', '', '', 1 ));
 
         $ids = array();
 
