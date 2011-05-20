@@ -287,90 +287,16 @@ function query($query_string, $debug = false, $key = false) {
  * @return mixed result
  * @author Basil Mohamed Gohar <basil@eschoolconsultants.com>
  * @author Nick Whitt
+ * @author John Colvin
  */
-function get_single_field_value($table_name, $field_name, $constraints, $debug=false)
-{
-    $where_clauses = get_where_clause_from_constraints($constraints);
-
-    $sql = get_sql($table_name, $field_name, $where_clauses, '', '', 1);
-
-    $result = query($sql, $debug);
-
-    if (is_array($result) && count($result) > 0) {
-        return $result[0][$field_name];
-    } else {
+function get_single_field_value($table_name, $field_name, $constraints) {
+    $recordset = new db_recordset($table_name, $constraints, false, null, null, true);
+    if (count($recordset) === 0) {
         return false;
     }
-}
-
-function get_where_clause_from_constraints($constraints = null)
-{
-    $where_clause = array();
-        // populate based on given constraints
-    if (null !== $constraints) {
-        foreach ($constraints as $field_name => $values)
-        {
-            // If operator is not specified, then assume "="
-            if ( strpos( $field_name, ' ' ) === FALSE )
-            {
-                if (null === $values) {
-                    //  Handle a special case where checking to see if something is exactly NULL
-                    $where_clause[] = '`' . mysql_real_escape_string($field_name) . '` IS NULL';
-                } else if (! is_array($values)) {
-                    //  $values is a scalar value
-                    $where_clause[] = '`' . mysql_real_escape_string($field_name) . "` = '" . mysql_real_escape_string($values) . "'";
-                } else if ($clause = get_sql_in_string($values, $field_name)) {
-                    $where_clause[] = $clause;
-                }
-            }
-            else
-            {
-                // get the field and operator which is separated by a space
-                $field = substr( $field_name, 0, strpos( $field_name, ' ' ));
-                $operator = substr( $field_name, strpos( $field_name, ' ' ) + 1 );
-
-                // allow for NOT IN
-                if ( is_array( $values ))
-                {
-                    if ( $operator == '!=' and $clause = get_sql_in_string( $values, $field, TRUE ))
-                    {
-                        $where_clause[] = $clause;
-                    }
-                    else
-                    {
-                        throw new Exception( 'Invalid constraint values' );
-                    }
-                }
-                // attempt to create a query using operators such as "<" or ">="
-                else {
-                    $value = $values;
-
-                    $field = trim($field);
-                    $value = trim($value);
-                    $operator = trim($operator);
-
-                    $clause = mysql_real_escape_string($field) . " $operator ";
-
-                    if (false !== strpos($value, "'", 0) && false !== strpos($value, "'", strlen($value) - 1)) {
-                        //  Value is already quoted
-                        $clause .= $value;
-                    }
-                    else {
-                        $clause .= "'" . $value . "'";
-                    }
-
-                    if (empty($clause)) {
-                        throw new Exception('Uknown constraint');
-                    }
-                    else {
-                        $where_clause[] = $clause;
-                    }
-                }
-            }
-        }
+    foreach ($recordset as $record) {
+        return $record->$field_name;
     }
-
-    return $where_clause;
 }
 
 /**
