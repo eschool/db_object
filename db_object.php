@@ -206,7 +206,7 @@ class db_object
 
         if (!$this->table_info) {
             //  Retrieve the object table information
-            if (!$table_info = query('SHOW COLUMNS FROM `' . mysql_real_escape_string($this->table_name) . '`', FALSE, 'Field')) {
+            if (!$table_info = $this->query('SHOW COLUMNS FROM `' . mysql_real_escape_string($this->table_name) . '`', 'Field')) {
                 throw new Exception('Unable to retrieve object table info for table "' . $this->table_name . '"');
             }
             //  Assign the values to the table
@@ -268,7 +268,7 @@ class db_object
             return TRUE;
         } else {
             //  Attempt to retrieve a record
-            if ($record = query("SELECT * FROM `" . mysql_real_escape_string($this->table_name) . "` WHERE `" . $this->primary_key_field . "` = '" . mysql_real_escape_string($id) . "'")) {
+            if ($record = $this->query("SELECT * FROM `" . mysql_real_escape_string($this->table_name) . "` WHERE `" . $this->primary_key_field . "` = '" . mysql_real_escape_string($id) . "'")) {
                 /**
                  * Successfully retrieved record
                  */
@@ -398,7 +398,7 @@ class db_object
             $this->execute_callbacks('before_save');
             $this->execute_callbacks('before_add');
 
-            if (query($sql_string)) {
+            if ($this->query($sql_string)) {
                 /**
                  * Retrieve the auto_incremented primary key
                  */
@@ -526,7 +526,7 @@ class db_object
             $this->execute_callbacks('before_save');
             $this->execute_callbacks('before_update');
 
-            if (query($sql_string)) {
+            if ($this->query($sql_string)) {
                 $this->modified_attributes = array();
 
                 // Call the callbacks
@@ -602,7 +602,7 @@ class db_object
             return $return_value;
         } else {
             $sql_delete_string = "DELETE FROM `" . mysql_real_escape_string($this->table_name) . "` WHERE `" . $this->primary_key_field . "` = '" . mysql_real_escape_string($this->get_attribute($this->primary_key_field)) . "' LIMIT 1";
-            if (query($sql_delete_string)) {
+            if ($this->query($sql_delete_string)) {
                 // Call the callbacks
                 $this->execute_callbacks('after_delete');
 
@@ -660,7 +660,7 @@ class db_object
 
         $restore_sql = "SELECT * FROM `" . mysql_real_escape_string($this->table_name) . "`
             WHERE `" . $this->primary_key_field . "` = '" . $this->get_id() . "'";
-        $result = current(query($restore_sql));
+        $result = current($this->query($restore_sql));
         $set_clause = array();
         foreach($result as $column_name=>$column_value)
         {
@@ -753,7 +753,7 @@ class db_object
         FROM
         `$this->table_name`
         ";
-        $result = query($sql);
+        $result = $this->query($sql);
         if (is_array($result) && sizeof($result) > 0) {
             $ids = array();
             foreach ($result as $row) {
@@ -1084,7 +1084,7 @@ class db_object
         }
 
         $sql = get_sql($table_name, $primary_key, $wheres);
-        $result = query($sql);
+        $result = $this->query($sql);
 
         $num_results = count($result);
 
@@ -1653,7 +1653,7 @@ class db_object
             }
             $where = implode(' AND ', $wheres);
             $sql = 'SELECT * FROM `' . $this->table_name . '` WHERE ' . $where  . ' AND `deleted` = true';
-            if ($entry = query($sql)) {
+            if ($entry = $this->query($sql)) {
                 //@todo should this return the first matching record's id??  The oldest??  The most recent??
                 if (is_array($entry[0])) {
                     return $entry[0]['id'];
@@ -2157,5 +2157,69 @@ class db_object
 
     protected function after_add($method) {
         $this->set_callback('after_add', $method);
+    }
+
+    /**
+     * query is a wrapper for mysql_query and mysql_fetch_assoc, which does basically what
+     * everyone wants to do with mysql (aside from connnecting, see below) with one function call, instead of several.
+     *
+     * The logic should be good for pretty much any kind of query.  I have used this structure for querying
+     * for years without problems.
+     *
+     * Since we should have a connection already open, I won't include configuration information here
+     *
+     * query returns either true, false or an array in the following format, depending on the style
+     * of the query (see the documentation of the PHP function mysql_query().
+     *
+     * The format of a returned array is as follows:
+     *
+     * Array {
+     *  [row# or field name] => Array {
+     *                  name => value
+     *                  name => value
+     *                  name => value
+     *                  name => value
+     *                  ....
+     *              }
+     *  [row# or field name] => Array {
+     *                  name => value
+     *                  name => value
+     *                  name => value
+     *                  name => value
+     *                  ....
+     *              }
+     *  ....
+     * }
+     *
+     * Which means you can loop over the output (after checking it to be an array), and every element
+     * of that loop will be an associative array with the key being the column name, and the value
+     * being the value of that column for that particular record row.  Row# is numbered from 0 to num_rows -1,
+     * and is not necessarily related to any values within the record set.  It is just the number of that
+     * row in this particular record set, which can vary from query-to-query.  Instead of row#, you can have
+     * the key be a field name by passing in the name via the $key param.
+     *
+     * @param string $query_string
+     * @param boolean $key
+     * @return mixed result set OR failure
+     * @author Basil Gohar <basil@eschoolconsultants.com>
+     */
+    public static function query($query_string, $key = false) {
+        if (is_string($query_string)) {
+            $result = mysql_query($query_string);
+
+            if (is_resource($result)) {
+                $return_array = array();
+                while ($row = mysql_fetch_assoc($result)) {
+                    if ($key)
+                        $return_array[$row[$key]] = $row;
+                    else
+                        $return_array[] = $row;
+                }
+                return $return_array;
+            }
+            else {
+                return $result;
+            }
+        }
     }
 }

@@ -47,7 +47,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function setUp()
     {
-        query( 'CREATE TABLE IF NOT EXISTS `fruits` (
+        db_object::query( 'CREATE TABLE IF NOT EXISTS `fruits` (
                     `id`    INT UNSIGNED NOT NULL AUTO_INCREMENT,
                     `name`  VARCHAR(255),
                     `color` VARCHAR(255),
@@ -57,9 +57,9 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
                     PRIMARY KEY (id)
                 ) ENGINE=InnoDB' );
 
-        query('START TRANSACTION');
+        db_object::query('START TRANSACTION');
 
-        query( 'INSERT INTO `fruits` (id, name, color, season, taste, deleted) VALUES
+        db_object::query( 'INSERT INTO `fruits` (id, name, color, season, taste, deleted) VALUES
                     (1, "strawberry", "red", "spring", "yummy", false),
                     (2, "banana", "yellow", "summer", "decent", false),
                     (3, "apple", "red", "fall", "decent", false),
@@ -69,13 +69,13 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     }
 
     function tearDown() {
-        query('ROLLBACK');
-        query("DROP TABLE `fruits`");
+        db_object::query('ROLLBACK');
+        db_object::query("DROP TABLE `fruits`");
     }
 
     function testGetFieldValuesMethod()
     {
-        $rset = query( get_sql( 'fruits', 'name' ));
+        $rset = db_object::query( get_sql( 'fruits', 'name' ));
 
         $ids = array();
 
@@ -94,7 +94,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testArrayAccessMethods()
     {
-        $rset = query( get_sql( 'fruits', 'MAX(id)' ));
+        $rset = db_object::query( get_sql( 'fruits', 'MAX(id)' ));
         $id   = $rset[0]['MAX(`id`)'];
 
         $this->assertEquals( $this->recordset[$id]->get_id(), $id );
@@ -102,7 +102,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testCountMethod()
     {
-        $rset  = query( get_sql( 'fruits', 'COUNT(id)' ));
+        $rset  = db_object::query( get_sql( 'fruits', 'COUNT(id)' ));
         $count = $rset[0]['COUNT(`id`)'];
 
         $this->assertEquals( count( $this->recordset ), $count );
@@ -124,7 +124,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testConditionalInstantiation()
     {
-        $rset = query( get_sql( 'fruits', 'id', '`color` = "red"' ));
+        $rset = db_object::query( get_sql( 'fruits', 'id', '`color` = "red"' ));
 
         $ids = array();
 
@@ -141,7 +141,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testOrderedInstantiation()
     {
-        $rset = query( get_sql( 'fruits', 'id', '', array( array( 'name', 'ASC' ))));
+        $rset = db_object::query( get_sql( 'fruits', 'id', '', array( array( 'name', 'ASC' ))));
 
         $ids = array();
 
@@ -182,7 +182,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testInstantiationWithAlternateKeys()
     {
-        $rset = query( get_sql( 'fruits', array( 'id', 'name' ), '', '', '', 1 ));
+        $rset = db_object::query( get_sql( 'fruits', array( 'id', 'name' ), '', '', '', 1 ));
         $id   = $rset[0]['id'];
         $name = $rset[0]['name'];
 
@@ -195,7 +195,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testSetConstraintsMethod()
     {
-        $rset = query( get_sql( 'fruits', 'id', '`color` = "red"' ));
+        $rset = db_object::query( get_sql( 'fruits', 'id', '`color` = "red"' ));
 
         $ids = array();
 
@@ -211,7 +211,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testSetRecordsetLimitMethodNoOffset()
     {
-        $rset = query( get_sql( 'fruits', 'id', '', '', '', 2 ));
+        $rset = db_object::query( get_sql( 'fruits', 'id', '', '', '', 2 ));
 
         $ids = array();
 
@@ -227,7 +227,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testSetRecordsetLimitMethodWithOffset()
     {
-        $rset = query( get_sql( 'fruits', 'id', '`id` > 2', '', '', 1 ));
+        $rset = db_object::query( get_sql( 'fruits', 'id', '`id` > 2', '', '', 1 ));
 
         $ids = array();
 
@@ -244,7 +244,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     function testTableInfoInstantiatedProperly()
     {
         $table_name = $this->recordset->table_name();
-        $table_info = query("SHOW COLUMNS FROM `$table_name`", false, 'Field');
+        $table_info = db_object::query("SHOW COLUMNS FROM `$table_name`", 'Field');
 
         $this->assertSame( $this->recordset->table_info(), $table_info );
     }
@@ -252,7 +252,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     function testPrimaryKeyProperlySet()
     {
         $table_name = $this->recordset->table_name();
-        $table_info = query("SHOW COLUMNS FROM `$table_name`", false, 'Field');
+        $table_info = db_object::query("SHOW COLUMNS FROM `$table_name`", 'Field');
 
         $primary_key_field_name = '';
 
@@ -276,7 +276,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
         // should match for standard rs
         $sql = "SELECT * FROM `fruits` WHERE `deleted` = false";
-        $r = query($sql);
+        $r = db_object::query($sql);
         $ids = array();
         foreach ($r as $info) {
             $ids[] = $info['id'];
@@ -286,7 +286,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
         // should match for a rs with include_deleted = true
         $sql = "SELECT * FROM `fruits`";
-        $r = query($sql);
+        $r = db_object::query($sql);
         $ids = array();
         foreach ($r as $info) {
             $ids[] = $info['id'];
@@ -309,7 +309,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
         // should match for standard rs
         $sql = "SELECT * FROM `fruits` WHERE `deleted` = false AND `id` IN ($where_string)";
-        $r = query($sql);
+        $r = db_object::query($sql);
         $ids = array();
         foreach ($r as $info) {
             $ids[] = $info['id'];
@@ -319,7 +319,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
         // should match for a rs with include_deleted = true
         $sql = "SELECT * FROM `fruits` WHERE `id` IN ($where_string)";
-        $r = query($sql);
+        $r = db_object::query($sql);
         $ids = array();
         foreach ($r as $info) {
             $ids[] = $info['id'];

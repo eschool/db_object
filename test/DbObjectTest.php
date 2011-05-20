@@ -54,7 +54,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             `updated_on` DATETIME NOT NULL,
             `deleted` TINYINT(1) NULL DEFAULT '0'
         )  ENGINE=InnoDB";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "CREATE TABLE `farm` (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
@@ -65,7 +65,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             `updated_on` DATETIME NOT NULL,
             `deleted` TINYINT(1) NULL DEFAULT '0'
         )  ENGINE=InnoDB";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "CREATE TABLE `barn` (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
@@ -78,7 +78,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             `inserted_ip` VARCHAR( 15 ) NOT NULL,
             `updated_ip` VARCHAR( 15 ) NOT NULL
         )  ENGINE=InnoDB";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "CREATE TABLE `animals` (
             `animal_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
@@ -91,7 +91,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             `updated_on` DATETIME NOT NULL,
             `deleted` TINYINT(1) NULL DEFAULT '0'
         ) ENGINE=InnoDB";
-        query($sql);
+        db_object::query($sql);
 
 
         $sql = "CREATE TABLE `bandit` (
@@ -108,33 +108,33 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             `updated_on` DATETIME NOT NULL,
             `deleted` TINYINT(1) NULL DEFAULT '0'
         ) ENGINE=InnoDB";
-        query($sql);
+        db_object::query($sql);
 
-        query('START TRANSACTION');
+        db_object::query('START TRANSACTION');
 
         $sql = "INSERT INTO `farm` VALUES (1, 'eSchool Farms', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', 0)";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "INSERT INTO `farm` VALUES (2, 'eSchool Farm #2', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', 0)";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "INSERT INTO `barn` VALUES (1, 1, 'The Barn', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', '', '')";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "INSERT INTO `animals` VALUES (1, 1, 1, 'Horse', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', 0)";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "INSERT INTO `animals` VALUES (2, 1, 1, 'Cow', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', 0)";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "INSERT INTO `animals` VALUES (3, 2, 1, 'Goat', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', 0)";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "INSERT INTO `bandit` VALUES (1, 'Juan Bandito', 7, 2567.32, 'yes', '1962-11-11', 'schladiesman@groupx.com', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', 0)";
-        query($sql);
+        db_object::query($sql);
 
         $sql = "INSERT INTO `bandit` VALUES (2, 'Carlos Mojito', 1, 12.99, 'no', '2008-05-22', 'catsgomeow@thelitterboxdepot.org', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', 0)";
-        query($sql);
+        db_object::query($sql);
 
         $person = new db_object('person');
         $person->first_name = 'Fake';
@@ -143,11 +143,11 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
     }
 
     function tearDown() {
-        query('ROLLBACK');
-        query("DROP TABLE `farm`");
-        query("DROP TABLE `barn`");
-        query("DROP TABLE `animals`");
-        query("DROP TABLE `bandit`");
+        db_object::query('ROLLBACK');
+        db_object::query("DROP TABLE `farm`");
+        db_object::query("DROP TABLE `barn`");
+        db_object::query("DROP TABLE `animals`");
+        db_object::query("DROP TABLE `bandit`");
     }
 
     /**
@@ -394,7 +394,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $farm->delete();
 
         $sql = "SELECT * FROM `farm` WHERE `id` = '$farm_id'";
-        list($r) = query($sql);
+        list($r) = db_object::query($sql);
         $this->assertEquals($r['deleted'], 1);
     }
 
@@ -406,7 +406,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
         // record should be completely gone.
         $sql = "SELECT * FROM `farm` WHERE `id` = '$farm_id'";
-        list($r) = query($sql);
+        list($r) = db_object::query($sql);
         $this->assertEquals($r, false);
     }
 
@@ -417,7 +417,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
         // record should be completely gone.
         $sql = "SELECT * FROM `barn` WHERE `id` = '$barn_id'";
-        list($r) = query($sql);
+        list($r) = db_object::query($sql);
         $this->assertEquals($r, false);
     }
 
@@ -465,7 +465,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $farm->delete();
 
         $sql = "SELECT * FROM `farm` WHERE `id` = '$farm_id'";
-        list($r) = query($sql);
+        list($r) = db_object::query($sql);
         $this->assertEquals($r['deleted'], 1);
 
         $farm = new farm();
@@ -475,7 +475,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $farm->add();
 
         $sql = "SELECT * FROM `farm` WHERE `name` = 'eSchool Farms'";
-        $r = query($sql);
+        $r = db_object::query($sql);
         $this->assertEquals(count($r), 1);
         $this->assertEquals($r[0]['deleted'], 0);
 
@@ -486,7 +486,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $farm->add();
 
         $sql = "SELECT * FROM `farm` WHERE `name` = 'eSchool Farms'";
-        $r = query($sql);
+        $r = db_object::query($sql);
         $this->assertEquals(count($r), 2);
         $this->assertEquals($r[0]['deleted'], 0);
         $this->assertEquals($r[1]['deleted'], 0);
