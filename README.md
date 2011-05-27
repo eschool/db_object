@@ -4,6 +4,8 @@ db_recordset provides a way to fetch and manipulate a set of db_objects
 Released under FREEBSD license
 Copyright eSchool Consultants 2010-2011
 
+Just include db_object.php in your project to start using db_object
+
 # Overview
 
 ## db_object
