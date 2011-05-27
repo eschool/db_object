@@ -27,7 +27,7 @@ mysql_select_db($test_db_name)
 // Things that must be defined in projects that use db_object and want user and IP metadata
     if (!function_exists('db_object_get_user_id')) {
         eval("function db_object_get_user_id() {
-                  return get_single_field_value('person', 'id', array('last_name' => 'Fakerson'));
+                  return db_object::get_single_field_value('person', 'id', array('last_name' => 'Fakerson'));
               }");
     }
 
@@ -428,11 +428,11 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
         // delete farm
         $farm->delete();
-        $this->assertEquals( '1', get_single_field_value( 'farm', 'deleted', array( 'id' => $farm->get_id() )));
+        $this->assertEquals( '1', db_object::get_single_field_value( 'farm', 'deleted', array( 'id' => $farm->get_id() )));
 
         // undelete farm
         $farm->undelete();
-        $this->assertEquals( '0', get_single_field_value( 'farm', 'deleted', array( 'id' => $farm->get_id() )));
+        $this->assertEquals( '0', db_object::get_single_field_value( 'farm', 'deleted', array( 'id' => $farm->get_id() )));
 
         // check against original
         $check = new farm(1);
@@ -971,7 +971,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
         // check with bad values
         $fake_id = 120533623;
-        $this->assertFalse( get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $fake_id )));
+        $this->assertFalse( db_object::get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $fake_id )));
         $this->assertTrue( $animal->set_attribute( 'inserted_by', $fake_id, FALSE ));
         $this->assertFalse( $animal->get_inserter_object() );
     }

@@ -4,30 +4,6 @@ require_once 'db_object.php';
 require_once 'db_recordset.php';
 
 /**
- * Retrieves a single field value from a row in the table specified that matches
- * the given column constraints. Returns false on no value being found.  In the case that multiple values
- * are matched, returns only the first value from the result set.
- *
- * @param string $table_name
- * @param string $field_name
- * @param array $columns
- * @param bool $debug
- * @return mixed result
- * @author Basil Mohamed Gohar <basil@eschoolconsultants.com>
- * @author Nick Whitt
- * @author John Colvin
- */
-function get_single_field_value($table_name, $field_name, $constraints) {
-    $recordset = new db_recordset($table_name, $constraints, false, null, null, true);
-    if (count($recordset) === 0) {
-        return false;
-    }
-    foreach ($recordset as $record) {
-        return $record->$field_name;
-    }
-}
-
-/**
  * This function takes an array and puts into the following SQL format:
  * ex.: field_name IN ('value1', 'value2', 'value3')
  *

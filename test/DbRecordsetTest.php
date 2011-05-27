@@ -27,7 +27,7 @@ mysql_select_db($test_db_name)
 // Things that must be defined in projects that use db_object and want user and IP metadata
     if (!function_exists('db_object_get_user_id')) {
         eval("function db_object_get_user_id() {
-                  return get_single_field_value('person', 'id', array('last_name' => 'Fakerson'));
+                  return db_object::get_single_field_value('person', 'id', array('last_name' => 'Fakerson'));
               }");
     }
 

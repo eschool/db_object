@@ -1214,7 +1214,7 @@ class db_object
         }
 
         // Try to find the record
-        $found_id = get_single_field_value($this->table_name, $this->primary_key_field, $columns);
+        $found_id = $this->get_single_field_value($this->table_name, $this->primary_key_field, $columns);
 
         if ($found_id)
         {
@@ -1756,7 +1756,7 @@ class db_object
         }
 
         // ensure valid foreign key
-        if ( !get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $this->inserted_by )))
+        if ( !$this->get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $this->inserted_by )))
         {
             return FALSE;
         }
@@ -1778,7 +1778,7 @@ class db_object
             return FALSE;
         }
 
-        if ( !get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $this->updated_by )))
+        if ( !$this->get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $this->updated_by )))
         {
             return FALSE;
         }
@@ -2408,5 +2408,29 @@ class db_object
         }
 
         return $sql;
+    }
+
+    /**
+     * Retrieves a single field value from a row in the table specified that matches
+     * the given column constraints. Returns false on no value being found.  In the case that multiple values
+     * are matched, returns only the first value from the result set.
+     *
+     * @param string $table_name
+     * @param string $field_name
+     * @param array $columns
+     * @param bool $debug
+     * @return mixed result
+     * @author Basil Mohamed Gohar <basil@eschoolconsultants.com>
+     * @author Nick Whitt
+     * @author John Colvin
+     */
+    public static function get_single_field_value($table_name, $field_name, $constraints) {
+        $recordset = new db_recordset($table_name, $constraints, false, null, null, true);
+        if (count($recordset) === 0) {
+            return false;
+        }
+        foreach ($recordset as $record) {
+            return $record->$field_name;
+        }
     }
 }
