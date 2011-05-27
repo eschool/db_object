@@ -1,5 +1,7 @@
 <?php
 
+require_once 'db_object.php';
+
 class db_recordset implements ArrayAccess, Iterator, Countable
 {
     //  Table structure attributes

@@ -30,6 +30,9 @@
  *
  */
 
+require_once 'lib.php';
+require_once 'db_recordset.php';
+
 class db_object
 {
 

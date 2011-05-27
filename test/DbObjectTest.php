@@ -15,7 +15,7 @@
  * >> php phpunit.php test/DbObjectTest.php
  */
 
-require_once dirname(__FILE__) . '/../lib.php';
+require_once dirname(__FILE__) . '/../db_object.php';
 
 extract(parse_ini_file('db_object_test.ini'));
 mysql_connect($db_host, $db_user, $db_password)

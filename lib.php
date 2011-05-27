@@ -1,8 +1,5 @@
 <?php
 
-require_once 'db_object.php';
-require_once 'db_recordset.php';
-
 /**
  * This function takes an array and puts into the following SQL format:
  * ex.: field_name IN ('value1', 'value2', 'value3')
