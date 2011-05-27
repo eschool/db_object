@@ -46,68 +46,68 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
     {
         $sql = "CREATE TABLE `person` (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-            `first_name` VARCHAR( 255 ) NOT NULL,
-            `last_name` VARCHAR( 255 ) NOT NULL,
+            `first_name` VARCHAR(255) NOT NULL,
+            `last_name` VARCHAR(255) NOT NULL,
             `inserted_by` INT NOT NULL ,
             `inserted_on` DATETIME NOT NULL ,
             `updated_by` INT NOT NULL ,
             `updated_on` DATETIME NOT NULL,
             `deleted` TINYINT(1) NULL DEFAULT '0'
-        )  ENGINE=InnoDB";
+       )  ENGINE=InnoDB";
         db_object::query($sql);
 
         $sql = "CREATE TABLE `farm` (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-            `name` VARCHAR( 255 ) NOT NULL DEFAULT 'Hillshire',
+            `name` VARCHAR(255) NOT NULL DEFAULT 'Hillshire',
             `entered_by` INT NOT NULL ,
             `entered_on` DATETIME NOT NULL ,
             `updated_by` INT NOT NULL ,
             `updated_on` DATETIME NOT NULL,
             `deleted` TINYINT(1) NULL DEFAULT '0'
-        )  ENGINE=InnoDB";
+       )  ENGINE=InnoDB";
         db_object::query($sql);
 
         $sql = "CREATE TABLE `barn` (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
             `farm_id` INT NOT NULL ,
-            `name` VARCHAR( 255 ) NOT NULL ,
+            `name` VARCHAR(255) NOT NULL ,
             `inserted_by` INT NOT NULL ,
             `inserted_on` DATETIME NOT NULL ,
             `updated_by` INT NOT NULL ,
             `updated_on` DATETIME NOT NULL,
-            `inserted_ip` VARCHAR( 15 ) NOT NULL,
-            `updated_ip` VARCHAR( 15 ) NOT NULL
-        )  ENGINE=InnoDB";
+            `inserted_ip` VARCHAR(15) NOT NULL,
+            `updated_ip` VARCHAR(15) NOT NULL
+       )  ENGINE=InnoDB";
         db_object::query($sql);
 
         $sql = "CREATE TABLE `animals` (
             `animal_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
             `farm_id` INT NOT NULL ,
             `barn` INT NULL,
-            `name` VARCHAR( 255 ) NOT NULL ,
+            `name` VARCHAR(255) NOT NULL ,
             `inserted_by` INT NOT NULL ,
             `inserted_on` DATETIME NOT NULL ,
             `updated_by` INT NOT NULL ,
             `updated_on` DATETIME NOT NULL,
             `deleted` TINYINT(1) NULL DEFAULT '0'
-        ) ENGINE=InnoDB";
+       ) ENGINE=InnoDB";
         db_object::query($sql);
 
 
         $sql = "CREATE TABLE `bandit` (
             `bandit_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-            `name` VARCHAR( 255 ) NOT NULL ,
+            `name` VARCHAR(255) NOT NULL ,
             `farms_plundered` INT(11) NOT NULL DEFAULT '0',
             `money_stolen` FLOAT DEFAULT '0' ,
             `dangerous` ENUM('yes', 'no', 'maybe so', 'enum()') NOT NULL DEFAULT 'yes',
             `birthday` DATE,
-            `email` VARCHAR( 255 ) ,
+            `email` VARCHAR(255) ,
             `inserted_by` INT NOT NULL ,
             `inserted_on` DATETIME NOT NULL ,
             `updated_by` INT NOT NULL ,
             `updated_on` DATETIME NOT NULL,
             `deleted` TINYINT(1) NULL DEFAULT '0'
-        ) ENGINE=InnoDB";
+       ) ENGINE=InnoDB";
         db_object::query($sql);
 
         db_object::query('START TRANSACTION');
@@ -168,7 +168,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             'Key' => 'PRI',
             'Default' => '',
             'Extra' => 'auto_increment'
-        );
+       );
 
         // Instantiate a new db_object with the array an make sure
         // db_object respects the bad info.
@@ -253,8 +253,8 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
     {
         $animal = new animal();
 
-        $this->assertEquals( $animal->get_attribute_type( 'farm_id' ), 'int' );
-        $this->assertEquals( $animal->get_attribute_type( 'name' ), 'varchar' );
+        $this->assertEquals($animal->get_attribute_type('farm_id'), 'int');
+        $this->assertEquals($animal->get_attribute_type('name'), 'varchar');
     }
 
     /**
@@ -428,33 +428,33 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
         // delete farm
         $farm->delete();
-        $this->assertEquals( '1', db_object::get_single_field_value( 'farm', 'deleted', array( 'id' => $farm->get_id() )));
+        $this->assertEquals('1', db_object::get_single_field_value('farm', 'deleted', array('id' => $farm->get_id())));
 
         // undelete farm
         $farm->undelete();
-        $this->assertEquals( '0', db_object::get_single_field_value( 'farm', 'deleted', array( 'id' => $farm->get_id() )));
+        $this->assertEquals('0', db_object::get_single_field_value('farm', 'deleted', array('id' => $farm->get_id())));
 
         // check against original
         $check = new farm(1);
-        $this->assertEquals( $farm->get_attributes(), $check->get_attributes() );
+        $this->assertEquals($farm->get_attributes(), $check->get_attributes());
     }
 
     function testUndeleteOnAdd()
     {
         // delete a farm
         $farm = new farm(1);
-        $this->assertTrue( $farm->delete() );
+        $this->assertTrue($farm->delete());
 
         // add same farm
         $same = new farm();
         $same->name = $farm->name;
         $same->entered_on = $farm->entered_on;
         $same->entered_by = $farm->entered_by;
-        $this->assertTrue( $same->add() );
+        $this->assertTrue($same->add());
 
         // check same farm
         $check = new farm(1);
-        $this->assertEquals( $same->get_attributes(), $check->get_attributes() );
+        $this->assertEquals($same->get_attributes(), $check->get_attributes());
     }
 
     function testAddAfterUndeleteByAdd() {
@@ -610,7 +610,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
         $animal = new animal(1);
         $animal->name = $bad_value;
-        $this->assertEquals( $animal->name, trim( $bad_value ));
+        $this->assertEquals($animal->name, trim($bad_value));
     }
 
     /**
@@ -958,22 +958,22 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $editor = new db_object(DB_OBJECT_USER_TABLE, db_object_get_user_id());
 
         // check inserter
-        $this->assertFalse( $animal->get_inserter_object() );
-        $this->assertTrue( $animal->set_attribute( 'inserted_by', $editor->get_id(), FALSE ));
-        $this->assertEquals( $animal->get_inserter_object()->get_attributes(), $editor->get_attributes() );
-        $this->assertEquals( $animal->get_editor_object()->get_attributes(), $editor->get_attributes() );
+        $this->assertFalse($animal->get_inserter_object());
+        $this->assertTrue($animal->set_attribute('inserted_by', $editor->get_id(), FALSE));
+        $this->assertEquals($animal->get_inserter_object()->get_attributes(), $editor->get_attributes());
+        $this->assertEquals($animal->get_editor_object()->get_attributes(), $editor->get_attributes());
 
         // check updater -- uses session data set above in testMetaDataIsAdded()
-        $this->assertFalse( $animal->get_updater_object() );
-        $this->assertTrue( $animal->update() );
-        $this->assertEquals( $animal->get_updater_object()->get_id(), db_object_get_user_id() );
-        $this->assertSame( $animal->get_editor_object(), $animal->get_updater_object() );
+        $this->assertFalse($animal->get_updater_object());
+        $this->assertTrue($animal->update());
+        $this->assertEquals($animal->get_updater_object()->get_id(), db_object_get_user_id());
+        $this->assertSame($animal->get_editor_object(), $animal->get_updater_object());
 
         // check with bad values
         $fake_id = 120533623;
-        $this->assertFalse( db_object::get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $fake_id )));
-        $this->assertTrue( $animal->set_attribute( 'inserted_by', $fake_id, FALSE ));
-        $this->assertFalse( $animal->get_inserter_object() );
+        $this->assertFalse(db_object::get_single_field_value(DB_OBJECT_USER_TABLE, 'id', array('id' => $fake_id)));
+        $this->assertTrue($animal->set_attribute('inserted_by', $fake_id, FALSE));
+        $this->assertFalse($animal->get_inserter_object());
     }
 
     public function testGetEditorTime()
@@ -981,10 +981,10 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $animal = new animal(1);
         $editor = new db_object(DB_OBJECT_USER_TABLE, db_object_get_user_id());
 
-        $this->assertFalse( $animal->get_editor_time() );
-        $this->assertTrue( $animal->set_attribute( 'inserted_by', $editor->get_id() ));
-        $this->assertSame( $animal->get_editor_time(), date( 'Y-m-d', strtotime( $animal->updated_on )));
-        $this->assertSame( $animal->get_editor_time( 'Y-m-d H:i:s'), $animal->updated_on );
+        $this->assertFalse($animal->get_editor_time());
+        $this->assertTrue($animal->set_attribute('inserted_by', $editor->get_id()));
+        $this->assertSame($animal->get_editor_time(), date('Y-m-d', strtotime($animal->updated_on)));
+        $this->assertSame($animal->get_editor_time('Y-m-d H:i:s'), $animal->updated_on);
     }
 
     public function testFilterAttributeAs() {
@@ -1095,7 +1095,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $this->assertFalse(empty($animal->name));
 
         // Values that should return true for empty
-        $names = array( '', 0, '0', null, FALSE, $garbage);
+        $names = array('', 0, '0', null, FALSE, $garbage);
 
         // Test all of those values above
         foreach ($names as $name) {
@@ -1124,7 +1124,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
     public function testCallbacksAreEmptyForBasicObject() {
         $animal = new animal();
-        $callbacks = array( 'before_add',
+        $callbacks = array('before_add',
             'before_update',
             'before_save',
             'after_save',
@@ -1241,7 +1241,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             'dangerous'       => 'no',
             'farms_plundered' => 0,
             'birthday'        => '2012-12-21'
-        );
+       );
 
         $bandit->set_attributes_if_default($attributes);
 

@@ -47,7 +47,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function setUp()
     {
-        db_object::query( 'CREATE TABLE IF NOT EXISTS `fruits` (
+        db_object::query('CREATE TABLE IF NOT EXISTS `fruits` (
                     `id`    INT UNSIGNED NOT NULL AUTO_INCREMENT,
                     `name`  VARCHAR(255),
                     `color` VARCHAR(255),
@@ -55,17 +55,17 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
                     `taste`     ENUM("yummy", "decent"),
                     `deleted`   TINYINT(1) NOT NULL DEFAULT \'0\',
                     PRIMARY KEY (id)
-                ) ENGINE=InnoDB' );
+               ) ENGINE=InnoDB');
 
         db_object::query('START TRANSACTION');
 
-        db_object::query( 'INSERT INTO `fruits` (id, name, color, season, taste, deleted) VALUES
+        db_object::query('INSERT INTO `fruits` (id, name, color, season, taste, deleted) VALUES
                     (1, "strawberry", "red", "spring", "yummy", false),
                     (2, "banana", "yellow", "summer", "decent", false),
                     (3, "apple", "red", "fall", "decent", false),
-                    (4, "kiwi", "brown", "winter", "yummy", false)' );
+                    (4, "kiwi", "brown", "winter", "yummy", false)');
 
-        $this->recordset = new db_recordset( 'fruits' );
+        $this->recordset = new db_recordset('fruits');
     }
 
     function tearDown() {
@@ -75,37 +75,37 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testGetFieldValuesMethod()
     {
-        $rset = db_object::query( db_object::get_sql( 'fruits', 'name' ));
+        $rset = db_object::query(db_object::get_sql('fruits', 'name'));
 
         $ids = array();
 
-        foreach ( $rset as $row )
+        foreach ($rset as $row)
         {
             $ids[] = $row['name'];
         }
 
-        $this->assertSame( $this->recordset->get_field_values( 'name' ), $ids );
+        $this->assertSame($this->recordset->get_field_values('name'), $ids);
 
         // Most tests will involve comparing created arrays with the recordset, so we
         // want to explicity test that get_recordset() works as intended.
-        $this->assertSame( $this->recordset->get_recordset(), $this->recordset->get_field_values( 'id' ));
+        $this->assertSame($this->recordset->get_recordset(), $this->recordset->get_field_values('id'));
     }
 
 
     function testArrayAccessMethods()
     {
-        $rset = db_object::query( db_object::get_sql( 'fruits', 'MAX(id)' ));
+        $rset = db_object::query(db_object::get_sql('fruits', 'MAX(id)'));
         $id   = $rset[0]['MAX(`id`)'];
 
-        $this->assertEquals( $this->recordset[$id]->get_id(), $id );
+        $this->assertEquals($this->recordset[$id]->get_id(), $id);
     }
 
     function testCountMethod()
     {
-        $rset  = db_object::query( db_object::get_sql( 'fruits', 'COUNT(id)' ));
+        $rset  = db_object::query(db_object::get_sql('fruits', 'COUNT(id)'));
         $count = $rset[0]['COUNT(`id`)'];
 
-        $this->assertEquals( count( $this->recordset ), $count );
+        $this->assertEquals(count($this->recordset), $count);
     }
 
 
@@ -116,7 +116,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
             $broken = new db_recordset();
             $this->fail();
         }
-        catch ( Exception $e )
+        catch (Exception $e)
         {
             $this->assertType('Exception', $e);
         }
@@ -124,121 +124,121 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
 
     function testConditionalInstantiation()
     {
-        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '`color` = "red"' ));
+        $rset = db_object::query(db_object::get_sql('fruits', 'id', '`color` = "red"'));
 
         $ids = array();
 
-        foreach ( $rset as $row )
+        foreach ($rset as $row)
         {
             $ids[] = $row['id'];
         }
 
-        $reds = new db_recordset( 'fruits', array( 'color' => 'red' ));
+        $reds = new db_recordset('fruits', array('color' => 'red'));
 
-        $this->assertSame( $reds->get_recordset(), $ids );
-        $this->assertNotEquals( $reds->get_recordset(), $this->recordset->get_recordset() );
+        $this->assertSame($reds->get_recordset(), $ids);
+        $this->assertNotEquals($reds->get_recordset(), $this->recordset->get_recordset());
     }
 
     function testOrderedInstantiation()
     {
-        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '', array( array( 'name', 'ASC' ))));
+        $rset = db_object::query(db_object::get_sql('fruits', 'id', '', array(array('name', 'ASC'))));
 
         $ids = array();
 
-        foreach ( $rset as $row )
+        foreach ($rset as $row)
         {
             $ids[] = $row['id'];
         }
 
-        $orders = new db_recordset( 'fruits', NULL, TRUE, array( 'name' => 'ASC' ));
+        $orders = new db_recordset('fruits', NULL, TRUE, array('name' => 'ASC'));
 
-        $this->assertSame( $orders->get_recordset(), $ids );
-        $this->assertNotEquals( $orders->get_recordset(), $this->recordset->get_recordset() );
+        $this->assertSame($orders->get_recordset(), $ids);
+        $this->assertNotEquals($orders->get_recordset(), $this->recordset->get_recordset());
     }
 
     function testOrderingAfterInstantiation()
     {
         // Ensure the recordset is unsorted
-        $rs = new db_recordset( 'fruits' );
-        $this->assertSame( $rs->get_recordset(), array('1','2','3','4') );
+        $rs = new db_recordset('fruits');
+        $this->assertSame($rs->get_recordset(), array('1','2','3','4'));
 
         // Ensure the recordset is now sorted by name
-        $rs->set_sort_order( array('name' => 'ASC') );
-        $this->assertSame( $rs->get_recordset(), array('3','2','4','1') );
+        $rs->set_sort_order(array('name' => 'ASC'));
+        $this->assertSame($rs->get_recordset(), array('3','2','4','1'));
 
         // Ensure the recordset is now sorted by season desc
-        $rs->set_sort_order( array('color' => 'DESC') );
-        $this->assertEquals( $rs->get_recordset(), array('2','1','3','4') );
+        $rs->set_sort_order(array('color' => 'DESC'));
+        $this->assertEquals($rs->get_recordset(), array('2','1','3','4'));
     }
 
     function testInstantiationOfClasses()
     {
-        $fruits = new db_recordset( 'fruits', NULL, TRUE );
+        $fruits = new db_recordset('fruits', NULL, TRUE);
         $this->assertType('fruit', $fruits->first());
 
-        $objects = new db_recordset( 'fruits', NULL, FALSE );
+        $objects = new db_recordset('fruits', NULL, FALSE);
         $this->assertType('db_object', $fruits->first());
     }
 
     function testInstantiationWithAlternateKeys()
     {
-        $rset = db_object::query( db_object::get_sql( 'fruits', array( 'id', 'name' ), '', '', '', 1 ));
+        $rset = db_object::query(db_object::get_sql('fruits', array('id', 'name'), '', '', '', 1));
         $id   = $rset[0]['id'];
         $name = $rset[0]['name'];
 
-        $alternates = new db_recordset( 'fruits', NULL, TRUE, NULL, 'name' );
+        $alternates = new db_recordset('fruits', NULL, TRUE, NULL, 'name');
 
-        $this->assertSame( $alternates->get_recordset(), $this->recordset->get_recordset() );
-        $this->assertSame( $alternates[$name]->get_attributes(), $this->recordset[$id]->get_attributes() );
+        $this->assertSame($alternates->get_recordset(), $this->recordset->get_recordset());
+        $this->assertSame($alternates[$name]->get_attributes(), $this->recordset[$id]->get_attributes());
     }
 
 
     function testSetConstraintsMethod()
     {
-        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '`color` = "red"' ));
+        $rset = db_object::query(db_object::get_sql('fruits', 'id', '`color` = "red"'));
 
         $ids = array();
 
-        foreach ( $rset as $row )
+        foreach ($rset as $row)
         {
             $ids[] = $row['id'];
         }
 
-        $this->recordset->set_constraints( $ids );
+        $this->recordset->set_constraints($ids);
 
-        $this->assertSame( $this->recordset->get_recordset(), $ids );
+        $this->assertSame($this->recordset->get_recordset(), $ids);
     }
 
     function testSetRecordsetLimitMethodNoOffset()
     {
-        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '', '', '', 2 ));
+        $rset = db_object::query(db_object::get_sql('fruits', 'id', '', '', '', 2));
 
         $ids = array();
 
-        foreach ( $rset as $row )
+        foreach ($rset as $row)
         {
             $ids[] = $row['id'];
         }
 
-        $this->recordset->set_recordset_limit( 2 );
+        $this->recordset->set_recordset_limit(2);
 
-        $this->assertSame( $this->recordset->get_recordset(), $ids );
+        $this->assertSame($this->recordset->get_recordset(), $ids);
     }
 
     function testSetRecordsetLimitMethodWithOffset()
     {
-        $rset = db_object::query( db_object::get_sql( 'fruits', 'id', '`id` > 2', '', '', 1 ));
+        $rset = db_object::query(db_object::get_sql('fruits', 'id', '`id` > 2', '', '', 1));
 
         $ids = array();
 
-        foreach ( $rset as $row )
+        foreach ($rset as $row)
         {
             $ids[] = $row['id'];
         }
 
-        $this->recordset->set_recordset_limit( 1, 2 );
+        $this->recordset->set_recordset_limit(1, 2);
 
-        $this->assertSame( $this->recordset->get_recordset(), $ids );
+        $this->assertSame($this->recordset->get_recordset(), $ids);
     }
 
     function testTableInfoInstantiatedProperly()
@@ -246,7 +246,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
         $table_name = $this->recordset->table_name();
         $table_info = db_object::query("SHOW COLUMNS FROM `$table_name`", 'Field');
 
-        $this->assertSame( $this->recordset->table_info(), $table_info );
+        $this->assertSame($this->recordset->table_info(), $table_info);
     }
 
     function testPrimaryKeyProperlySet()
@@ -263,7 +263,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
             }
         }
 
-        $this->assertSame( $this->recordset->get_primary_key_field(), $primary_key_field_name );
+        $this->assertSame($this->recordset->get_primary_key_field(), $primary_key_field_name);
     }
 
     function testIncludeDeletedRecords()
@@ -350,17 +350,17 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     public function testFirst()
     {
         // get first object
-        $fruit_1 = new fruit( 1 );
-        $this->assertSame( $this->recordset->first()->get_attributes(), $fruit_1->get_attributes());
+        $fruit_1 = new fruit(1);
+        $this->assertSame($this->recordset->first()->get_attributes(), $fruit_1->get_attributes());
 
         // preserve sort order
-        $fruit_3 = new fruit( 3 );
-        $this->recordset->set_sort_order( array( 'name' => 'ASC' ));
-        $this->assertSame( $this->recordset->first()->get_attributes(), $fruit_3->get_attributes());
+        $fruit_3 = new fruit(3);
+        $this->recordset->set_sort_order(array('name' => 'ASC'));
+        $this->assertSame($this->recordset->first()->get_attributes(), $fruit_3->get_attributes());
 
         // empty recordset
-        $rs = new db_recordset( 'fruits', array() );
-        $this->assertFalse( $rs->first() );
+        $rs = new db_recordset('fruits', array());
+        $this->assertFalse($rs->first());
     }
 
     // Make sure db_recordset will look for a class named the singular

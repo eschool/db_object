@@ -14,7 +14,7 @@
  *                in the $data array to.
  * @param bool $negative
  */
-function get_sql_in_string( $data, $field_name, $negative=FALSE )
+function get_sql_in_string($data, $field_name, $negative=FALSE)
 {
     /**
      * WARNING: passing empty $data will cause a string like:
@@ -34,12 +34,10 @@ function get_sql_in_string( $data, $field_name, $negative=FALSE )
     if (strlen(trim($in_string)) == 0)
         $in_string = "''";
 
-    if ( $negative === FALSE )
-    {
+    if ($negative === FALSE) {
         $sql_string = '' . mysql_real_escape_string($field_name) . ' IN (' . $in_string . ')';
     }
-    else
-    {
+    else {
         $sql_string = mysql_real_escape_string( $field_name ) . ' NOT IN (' . $in_string . ')';
     }
 

@@ -33,8 +33,7 @@
 require_once 'lib.php';
 require_once 'db_recordset.php';
 
-class db_object
-{
+class db_object {
 
     /**
      * All attributes pulled from a database or currently set for the object
@@ -112,7 +111,7 @@ class db_object
                                 'updated_by',
                                 'updated_ip',
                                 'deleted'
-                                );
+                               );
 
     /**
      * The names of fields that hold metadata for this object (e.g., inserted_on)
@@ -152,7 +151,7 @@ class db_object
     protected static $object_cache = array();
 
     // these values are defined by SQL to be text fields
-    protected $text_types = array( 'varchar', 'char', 'enum', 'set', 'tinytext', 'text', 'mediumtext', 'longtext' );
+    protected $text_types = array('varchar', 'char', 'enum', 'set', 'tinytext', 'text', 'mediumtext', 'longtext');
 
     // Set up the callback array
     protected $callbacks = array(
@@ -164,7 +163,7 @@ class db_object
                                   'after_delete'    => array(),
                                   'after_update'    => array(),
                                   'after_add'       => array()
-                                );
+                               );
 
     /**
      * PHP5-style constructor
@@ -190,7 +189,8 @@ class db_object
             //  Utilize the dry-instantiated $table_info rather than retrieving it from
             //  session or the database
             $this->table_info = $table_info;
-        } else {
+        }
+        else {
             /**
              * Check to see if a session is active
              */
@@ -253,36 +253,30 @@ class db_object
                 return true;
             }
 
-            $this->null_instantiated = TRUE;
+            $this->null_instantiated = true;
 
             // Set default values
-            foreach ( $this->table_info as $row )
-            {
-                if ( is_null( $row['Default'] ))
-                {
-                    $this->set_attribute( $row['Field'], NULL, FALSE, FALSE, FALSE );
+            foreach ($this->table_info as $row) {
+                if (is_null($row['Default'])) {
+                    $this->set_attribute($row['Field'], NULL, false, false, false);
                 }
-                else
-                {
-                    $this->set_attribute( $row['Field'], $row['Default'], FALSE, FALSE, FALSE );
+                else {
+                    $this->set_attribute($row['Field'], $row['Default'], false, false, false);
                 }
             }
 
-            return TRUE;
+            return true;
         } else {
             //  Attempt to retrieve a record
             if ($record = $this->query("SELECT * FROM `" . mysql_real_escape_string($this->table_name) . "` WHERE `" . $this->primary_key_field . "` = '" . mysql_real_escape_string($id) . "'")) {
-                /**
-                 * Successfully retrieved record
-                 */
+                // Successfully retrieved record
                 $this->attributes = $record[0];
 
-                /**
-                 * Ensure that this object is no longer considered null_instantiated
-                 */
+                // Ensure that this object is no longer considered null_instantiated
                 $this->null_instantiated = false;
                 return true;
-            } else {
+            }
+            else {
                 //$this->null_instantiated = true;
                 //  Could not retrieve a record with this id
                 throw new Exception('Unable to instantiate object of type "' . $table_name . '" with id: "' . $id . '"');
@@ -318,7 +312,8 @@ class db_object
             in_array('inserted_by', $this->metadata_field_override) ||
             in_array('inserted_ip', $this->metadata_field_override)) {
                 $metadata_override = true;
-            } else {
+            }
+            else {
                 $metadata_override = false;
             }
         //  We check if the record has either been modified (to prevent duplicate records) or if they want to force it anyway
@@ -333,7 +328,7 @@ class db_object
                 }
                 if (false !== ($current_user_id = db_object_get_user_id())) {
                     if (is_numeric($current_user_id)) {
-                        if ($this->is_acceptable_attribute('inserted_by') ) {
+                        if ($this->is_acceptable_attribute('inserted_by')) {
                             $this->set_attribute('inserted_by', $current_user_id, false, true, false);
                         }
                     }
@@ -380,15 +375,15 @@ class db_object
                 $value = $values[$i];
 
                 // Skip this column if the value is NULL
-                if ( is_null( $value )) {
+                if (is_null($value)) {
                     continue;
                 }
                 else {
-                    if ( get_magic_quotes_gpc() ) {
-                        $value = stripslashes( $value );
+                    if (get_magic_quotes_gpc()) {
+                        $value = stripslashes($value);
                     }
 
-                    $value_array[] = '"' . mysql_real_escape_string( $value ) . '"';
+                    $value_array[] = '"' . mysql_real_escape_string($value) . '"';
                 }
             }
 
@@ -417,10 +412,12 @@ class db_object
                 $this->execute_callbacks('after_save');
 
                 return true;
-            } else {
+            }
+            else {
                 throw new Exception('Could not insert new object: ' . mysql_error());
             }
-        } else {
+        }
+        else {
             throw new Exception('Unable to add unmodified record.  Set $force parameter to true to override');
         }
     }
@@ -444,7 +441,8 @@ class db_object
             in_array('updated_by', $this->metadata_field_override) ||
             in_array('updated_ip', $this->metadata_field_override)) {
                 $metadata_override = true;
-            } else {
+            }
+            else {
                 $metadata_override = false;
             }
         if ($this->modified() || $force) {
@@ -458,7 +456,7 @@ class db_object
                 }
                 if (false !== ($current_user_id = db_object_get_user_id())) {
                     if (is_numeric($current_user_id)) {
-                        if ($this->is_acceptable_attribute('updated_by') ) {
+                        if ($this->is_acceptable_attribute('updated_by')) {
                             $this->set_attribute('updated_by', $current_user_id, false, true, false);
                         }
                     }
@@ -479,32 +477,32 @@ class db_object
                     throw new Exception('Columns array and values array sizes do not match');
                 }
 
-                for ( $i = 0; $i < $num_columns; $i++ ) {
+                for ($i = 0; $i < $num_columns; $i++) {
                     $column = $columns[$i];
                     $value  = $values[$i];
 
-                    if ( get_magic_quotes_gpc() ) {
+                    if (get_magic_quotes_gpc()) {
                         $column = stripslashes($column);
 
-                        if ( !is_null( $value )) {
+                        if (!is_null($value)) {
                             $value  = stripslashes($value);
                         }
                     }
 
-                    $name_value_pair = ' `' . mysql_real_escape_string( $column ) . '` = ';
+                    $name_value_pair = ' `' . mysql_real_escape_string($column) . '` = ';
 
-                    if ( is_null( $value )) {
+                    if (is_null($value)) {
                         $name_value_pair .= 'NULL, ';
                     }
                     else {
-                        $name_value_pair .= '"' . mysql_real_escape_string( $value ) . '", ';
+                        $name_value_pair .= '"' . mysql_real_escape_string($value) . '", ';
                     }
 
                     $sql_string .= $name_value_pair;
                 }
 
                 //  trim off the last remaining comma
-                $sql_string = substr( $sql_string, 0, -2 );
+                $sql_string = substr($sql_string, 0, -2);
             }
             else {
                 if (is_string($columns) && strlen($columns) > 0) {
@@ -537,10 +535,12 @@ class db_object
                 $this->execute_callbacks('after_save');
 
                 return true;
-            } else {
+            }
+            else {
                 throw new Exception('Could not update attributes: ' . mysql_error());
             }
-        } else {
+        }
+        else {
             throw new Exception('Unable to update unmodified record.  Set $force parameter to true to override');
         }
     }
@@ -572,21 +572,17 @@ class db_object
          */
         $related_tables = $this->get_db_relationship_tables();
 
-        foreach ($related_tables as $related_table)
-        {
+        foreach ($related_tables as $related_table) {
             $relationship_type = $this->get_db_relationship_type($related_table);
 
-            switch ($relationship_type)
-            {
+            switch ($relationship_type) {
                 case 'has_one':
                     if ($related_db_object = $this->get_child_object($related_table))
                         $related_db_object->delete($force, $hard);
                     break;
                 case 'has_many':
-                    if ($related_db_recordset = $this->get_child_object($related_table))
-                    {
-                        foreach ($related_db_recordset as $related_db_object)
-                        {
+                    if ($related_db_recordset = $this->get_child_object($related_table)) {
+                        foreach ($related_db_recordset as $related_db_object) {
                             $related_db_object->delete($force, $hard);
                         }
                     }
@@ -597,13 +593,14 @@ class db_object
         }
 
         if ($hard !== true && in_array('deleted', $this->metadata_fields)) {
-            $return_value = $this->set_attribute( 'deleted', '1', $force_update=TRUE, $check_acceptable_attribute=TRUE, $metadata_override=FALSE );
+            $return_value = $this->set_attribute('deleted', '1', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false);
 
             // Call the callbacks
             $this->execute_callbacks('after_delete');
 
             return $return_value;
-        } else {
+        }
+        else {
             $sql_delete_string = "DELETE FROM `" . mysql_real_escape_string($this->table_name) . "` WHERE `" . $this->primary_key_field . "` = '" . mysql_real_escape_string($this->get_attribute($this->primary_key_field)) . "' LIMIT 1";
             if ($this->query($sql_delete_string)) {
                 // Call the callbacks
@@ -611,7 +608,8 @@ class db_object
 
                 $this->attributes = NULL;
                 return true;
-            } else {
+            }
+            else {
                 throw new Exception('Could not delete record: ' . mysql_error());
             }
         }
@@ -637,21 +635,17 @@ class db_object
          */
         $related_tables = $this->get_db_relationship_tables();
 
-        foreach ($related_tables as $related_table)
-        {
+        foreach ($related_tables as $related_table) {
             $relationship_type = $this->get_db_relationship_type($related_table);
 
-            switch ($relationship_type)
-            {
+            switch ($relationship_type) {
                 case 'has_one':
                     if ($related_db_object = $this->get_child_object($related_table))
                         $related_db_object->restore();
                     break;
                 case 'has_many':
-                    if ($related_db_recordset = $this->get_child_object($related_table))
-                    {
-                        foreach ($related_db_recordset as $related_db_object)
-                        {
+                    if ($related_db_recordset = $this->get_child_object($related_table)) {
+                        foreach ($related_db_recordset as $related_db_object) {
                             $related_db_object->restore();
                         }
                     }
@@ -665,20 +659,17 @@ class db_object
             WHERE `" . $this->primary_key_field . "` = '" . $this->get_id() . "'";
         $result = current($this->query($restore_sql));
         $set_clause = array();
-        foreach($result as $column_name=>$column_value)
-        {
+        foreach($result as $column_name=>$column_value) {
             $set_clause[] = '`'.mysql_real_escape_string($column_name).'`=\''.mysql_real_escape_string($column_value).'\'';
         }
         $set_sql = implode(',',$set_clause);
 
         // If is NOT soft delete
-        if(!isset($result['deleted']))
-        {
+        if (!isset($result['deleted'])) {
             // We're doing ON DUPLICATE KEY UPDATE on the off chance that somehow delete doesn't delete, but restore attempts to restore
             $sql_out = 'INSERT INTO `'.mysql_real_escape_string($this->table_name).'` SET '.$set_sql.' ON DUPLICATE KEY UPDATE '.$set_sql.';';
         }
-        else
-        {
+        else {
             $where_clause = '`'.mysql_real_escape_string($this->primary_key_field).'`="'.$this->get_id().'"';
             $sql_out = 'UPDATE `'.mysql_real_escape_string($this->table_name).'` SET '.$set_sql.' WHERE '.$where_clause.';';
         }
@@ -716,7 +707,8 @@ class db_object
     {
         if (array_key_exists($name, $this->attributes)) {
             return $this->attributes[$name];
-        } else {
+        }
+        else {
             throw new Exception('Invalid attribute specified: "'.$name.'" in object of type "'.$this->table_name.'"', 1);
         }
     }
@@ -734,11 +726,10 @@ class db_object
     public function get_id()
     {
         if ($this->null_instantiated) {
-            /**
-             * There is no primary key if the object is null-instantiated
-             */
+             // There is no primary key if the object is null-instantiated
             return false;
-        } else {
+        }
+        else {
             return $this->get_attribute($this->primary_key_field);
         }
     }
@@ -763,7 +754,8 @@ class db_object
                 $ids[] = $row[$this->primary_key_field];
             }
             return $ids;
-        } else {
+        }
+        else {
             return false;
         }
     }
@@ -838,32 +830,28 @@ class db_object
         }
 
         // ensure value is trimmed for text values
-        if ( in_array( $this->get_attribute_type( $name ), $this->text_types ))
-        {
-            $value = trim( $value );
+        if (in_array($this->get_attribute_type($name), $this->text_types)) {
+            $value = trim($value);
         }
 
         if ($this->get_attribute($name) === $value) {
-            /**
-             * Unnecessary to update a value to itself
-             */
+            // Unnecessary to update a value to itself
         }
-        else
-        {
+        else {
             //Check to see if there's a content type set that would lead to a filter choice
-            if(isset($this->attribute_content_types[$name]) and $this->attribute_content_types[$name] != 'raw'){
+            if (isset($this->attribute_content_types[$name]) and $this->attribute_content_types[$name] != 'raw') {
                 $filtered_value = $this->filter_attribute($name, $value);
             }
             //If this attribute has no specified content type or it is set as raw, don't filter it.
-            else{
+            else {
                 $filtered_value = $value;
             }
 
-            if($this->force_no_filtering == TRUE){
+            if ($this->force_no_filtering == true) {
                 $this->attributes[$name] = $value;
                 $this->modified_attributes[$name] = $value;
             }
-            else{
+            else {
                 $this->attributes[$name] = $filtered_value;
                 $this->modified_attributes[$name] = $filtered_value;
             }
@@ -877,10 +865,12 @@ class db_object
             if ($this->update()) {
                 $this->modified_attributes = array();
                 return true;
-            } else {
+            }
+            else {
                 throw new Exception('Could not execute forced update for attribute "' . $name . '"');
             }
-        } else {
+        }
+        else {
             //  We've successfully completed everything we need to by this point
             return true;
         }
@@ -913,10 +903,12 @@ class db_object
             if ($this->update()) {
                 $this->modified_attributes = array();
                 return true;
-            } else {
+            }
+            else {
                 throw new Exception('Could not execute forced update for array of attributes');
             }
-        } else {
+        }
+        else {
             //  We've successfully completed everything we need to by this point
             return true;
         }
@@ -950,19 +942,17 @@ class db_object
      * @param bool $allow_metadata
      * @return boolean exists
      */
-    public function is_acceptable_attribute( $name, $allow_metadata=TRUE )
+    public function is_acceptable_attribute($name, $allow_metadata=true)
     {
-        if ( !array_key_exists( $name, $this->attributes ))
-        {
-            return FALSE;
+        if (!array_key_exists($name, $this->attributes)) {
+            return false;
         }
 
-        if ( $allow_metadata != TRUE and in_array( $name, $this->metadata_fields ))
-        {
-            return FALSE;
+        if ($allow_metadata != true and in_array($name, $this->metadata_fields)) {
+            return false;
         }
 
-        return TRUE;
+        return true;
     }
 
     /**
@@ -1017,7 +1007,8 @@ class db_object
 
         if ($table_name) {
             return $this->retrieve_from_cache($table_name, $attribute_value);
-        } else {
+        }
+        else {
             throw new Exception("Could not determine a proper table name from the attribute: $attribute.");
         }
     }
@@ -1039,8 +1030,7 @@ class db_object
         $foreign_key = $this->verify_foreign_key($foreign_key);
 
         // Figure out what type of object to return
-        if ($this->is_db_relationship_set($table_name))
-        {
+        if ($this->is_db_relationship_set($table_name)) {
             $db_relationship_type  = $this->get_db_relationship_type($table_name);
             $db_relationship_field = $this->get_db_relationship_field($table_name);
 
@@ -1049,8 +1039,7 @@ class db_object
                 $foreign_key = $this->{$db_relationship_type.'_relationship'}[$table_name];
             }
 
-            switch ($db_relationship_type)
-            {
+            switch ($db_relationship_type) {
                 case 'has_one':
                     if ($force_object_type === NULL)
                         $force_object_type = 'db_object';
@@ -1078,8 +1067,7 @@ class db_object
         $wheres[] = "$foreign_key='".$this->get_id()."'";
 
         // If contraints are passed in as a parameter
-        if ($constraints)
-        {
+        if ($constraints) {
             // Allow constraints to be a string
             if (!is_array($constraints))
                 $constraints = array($constraints);
@@ -1095,8 +1083,7 @@ class db_object
 
         if (is_array($result) && $num_results > 0) {
         // Get the ids to instantiate the object with
-            foreach($result as $single_result)
-            {
+            foreach($result as $single_result) {
                 $ids[] = $single_result[$primary_key];
             }
         }
@@ -1104,17 +1091,20 @@ class db_object
         if (empty($ids))
             return false;
 
-        // Allow the db_object type to be forced
         if ($force_object_type == 'db_object') {
+            // Allow the db_object type to be forced
             return $this->retrieve_from_cache($table_name, $ids[0]);
-        // Allow the db_recordset type to be forced
-        } elseif ($force_object_type == 'db_recordset') {
+        }
+        elseif ($force_object_type == 'db_recordset') {
+            // Allow the db_recordset type to be forced
             return $this->auto_discover_db_recordset($table_name, $ids);
-        // If there is only one return a db_object
-        } elseif ($num_results == 1) {
+        }
+        elseif ($num_results == 1) {
+            // If there is only one return a db_object
             return $this->auto_discover_db_object($table_name, $ids[0]);
-        // If there is more than one return a db_recordset
-        } elseif ($num_results > 1) {
+        }
+        elseif ($num_results > 1) {
+            // If there is more than one return a db_recordset
             return $this->auto_discover_db_recordset($table_name, $ids);
         }
     }
@@ -1136,7 +1126,8 @@ class db_object
         // If not, they are looking for a child and we will use this object's id
         if ($attribute_value != NULL) {
             $attribute_to_use = $attribute_value;
-        } else {
+        }
+        else {
             $attribute_to_use = $this->get_id();
         }
 
@@ -1151,13 +1142,16 @@ class db_object
             //  A class name matching the table name was autodiscovered, so return an instance of this class
             //  rather than default db_object class
             return new $table_name($attribute_to_use);
-        } elseif ($singular_table_name != '' && class_exists($singular_table_name) && is_subclass_of($singular_table_name, 'db_object')) {
+        }
+        elseif ($singular_table_name != '' && class_exists($singular_table_name) && is_subclass_of($singular_table_name, 'db_object')) {
             // Sometimes it's nice to name a table pluraly, but use a singular object name.
             // This allows for that.  Example: table: grants db_object: grant
             return new $singular_table_name($attribute_to_use);
-        } elseif ($db_object = new db_object($table_name, $attribute_to_use)) {
+        }
+        elseif ($db_object = new db_object($table_name, $attribute_to_use)) {
             return $db_object;
-        } else {
+        }
+        else {
             throw new Exception("Could not create a db_object for the attribute: $attribute_to_use.");
         }
     }
@@ -1175,17 +1169,14 @@ class db_object
     {
         $recordset_name = $table_name.'_recordset';
 
-        if ( class_exists( $recordset_name ) and is_subclass_of( $recordset_name, 'db_recordset' ))
-        {
-            return new $recordset_name( $ids );
+        if (class_exists($recordset_name) and is_subclass_of($recordset_name, 'db_recordset')) {
+            return new $recordset_name($ids);
         }
-        elseif ( $db_recordset = new db_recordset( $table_name, $ids ))
-        {
+        elseif ($db_recordset = new db_recordset($table_name, $ids)) {
             return $db_recordset;
         }
-        else
-        {
-            throw new Exception( "Could not create a db_recordset for the table: $table_name." );
+        else {
+            throw new Exception("Could not create a db_recordset for the table: $table_name.");
         }
     }
 
@@ -1202,16 +1193,13 @@ class db_object
     public function find($columns)
     {
         // We can only do this on null instantiated objects
-        if (!$this->null_instantiated)
-        {
+        if (!$this->null_instantiated) {
             throw new Exception("The method: 'find' cannot be called on an existing object, it must be null instantiated.");
         }
 
-        foreach ($columns as $field_name => $field_value)
-        {
+        foreach ($columns as $field_name => $field_value) {
             // Make sure it's a legit attribute
-            if (!$this->is_acceptable_attribute($field_name))
-            {
+            if (!$this->is_acceptable_attribute($field_name)) {
                 throw new Exception("The method: 'find' tries to find by a non-existent attribute: '$field_name'.");
             }
         }
@@ -1219,8 +1207,7 @@ class db_object
         // Try to find the record
         $found_id = $this->get_single_field_value($this->table_name, $this->primary_key_field, $columns);
 
-        if ($found_id)
-        {
+        if ($found_id) {
             // If this is an extended object, then we pass the id.
             if (is_subclass_of($this, 'db_object')) {
                 $this->__construct($found_id);
@@ -1289,8 +1276,7 @@ class db_object
      **/
     private function determine_table_name_from_foreign_key($attribute)
     {
-        if (substr($attribute, -3) == '_id')
-        {
+        if (substr($attribute, -3) == '_id') {
             $id_position = strpos($attribute, '_id');
             $table_name = substr($attribute, 0, $id_position);
 
@@ -1318,8 +1304,7 @@ class db_object
      **/
     protected function get_db_relationship_type($table_name)
     {
-        if ($this->is_db_relationship_set($table_name))
-        {
+        if ($this->is_db_relationship_set($table_name)) {
             if (isset($this->has_one_relationship[$table_name]))
                 return 'has_one';
             elseif (isset($this->has_many_relationship[$table_name]))
@@ -1329,8 +1314,7 @@ class db_object
             else
                 return false;
         }
-        else
-        {
+        else {
             throw new Exception("The table '$table_name' is not in the db_relationship declaration.");
         }
     }
@@ -1346,15 +1330,13 @@ class db_object
      **/
     protected function get_db_relationship_field($table_name)
     {
-        if ($this->is_db_relationship_set($table_name))
-        {
+        if ($this->is_db_relationship_set($table_name)) {
             $relationship_type = $this->get_db_relationship_type($table_name);
             $array_name = $relationship_type . '_relationship';
             $db_relationship_field = $this->{$array_name}[$table_name];
             return $db_relationship_field;
         }
-        else
-        {
+        else {
             throw new Exception("The table '$table_name' is not in the db_relationship declaration.");
         }
     }
@@ -1417,8 +1399,7 @@ class db_object
      **/
     protected function belongs_to($table_name, $foreign_key=NULL)
     {
-        if ($foreign_key === NULL)
-        {
+        if ($foreign_key === NULL) {
             $foreign_key = $this->determine_foreign_key_from_table_name($table_name);
         }
 
@@ -1429,8 +1410,7 @@ class db_object
     {
         // First, make sure we store only one record per table in the cache.
         // If this record is already there, then we don't need to do anything.
-        if (!isset(self::$object_cache[$table_name][$id]))
-        {
+        if (!isset(self::$object_cache[$table_name][$id])) {
             unset(self::$object_cache[$table_name]);
             self::$object_cache[$table_name][$id] = $this->auto_discover_db_object($table_name, $id);
         }
@@ -1479,14 +1459,12 @@ class db_object
         $related_tables = $this->get_db_relationship_tables();
 
         // First, allow for the "find_by_attribute" method.
-        if (substr($method, 0, 7) == 'find_by')
-        {
+        if (substr($method, 0, 7) == 'find_by') {
             // Should be after the "find_by_"
             $field_to_find_by = substr($method, 8);
             return $this->find(array($field_to_find_by => $arguments[0]));
         }
-        elseif (in_array($method, $related_tables))
-        {
+        elseif (in_array($method, $related_tables)) {
             // Grab the arguments.  In this case $arguments[0] is $constraints
             if (isset($arguments[0]) && ! empty($arguments[0]))
                 $constraints = $arguments[0];
@@ -1496,8 +1474,7 @@ class db_object
             // If so, figure out the type of relationship and make sure we get the appropriate object.
             $relationship_type = $this->get_db_relationship_type($method);
 
-            switch ($relationship_type)
-            {
+            switch ($relationship_type) {
                 case 'has_one':
                 case 'has_many':
                     return $this->get_child_object($method, NULL, $constraints);
@@ -1510,18 +1487,15 @@ class db_object
         }
         // Allow a parent table even if it's not explicitly defined.
         // The foriegn key in this table must be named "parent_table_id"
-        elseif ($relationship_field = $this->determine_foreign_key_from_table_name($method))
-        {
+        elseif ($relationship_field = $this->determine_foreign_key_from_table_name($method)) {
             return $this->get_parent_object($relationship_field, $method, $this->get_attribute($relationship_field));
         }
         // Allow a child table even if it's not explicitly defined.
         // The foreign key must be named "child_table_id"
-        elseif ($child_object = $this->get_child_object($method))
-        {
+        elseif ($child_object = $this->get_child_object($method)) {
             return $child_object;
         }
-        else
-        {
+        else {
             throw new Exception("The method: '$method' does not exist in db_object.");
         }
     }
@@ -1556,12 +1530,11 @@ class db_object
      * @return int
      * @author Nick Whitt
      */
-    public function duplicate_object( $has_one=FALSE, $has_many=FALSE )
+    public function duplicate_object($has_one=false, $has_many=false)
     {
         // sanity check
-        if ( $this->null_instantiated === TRUE or $this->modified() )
-        {
-            throw new Exception( 'Unable to duplicate an unstable object' );
+        if ($this->null_instantiated === true or $this->modified()) {
+            throw new Exception('Unable to duplicate an unstable object');
         }
 
 
@@ -1570,68 +1543,55 @@ class db_object
 
         $not_to_duplicate[] = $this->primary_key_field;
 
-        foreach ( $this->metadata_fields as $field )
-        {
+        foreach ($this->metadata_fields as $field) {
             $not_to_duplicate[] = $field;
         }
 
 
         // duplicate object
-        $object = new db_object( $this->table_name );
+        $object = new db_object($this->table_name);
 
-        foreach ( $this->attributes as $attribute => $value )
-        {
-            if ( in_array( $attribute, $not_to_duplicate ))
-            {
+        foreach ($this->attributes as $attribute => $value) {
+            if (in_array($attribute, $not_to_duplicate)) {
                 continue;
             }
 
-            $object->set_attribute( $attribute, $value );
+            $object->set_attribute($attribute, $value);
         }
 
-        if ( !$object->add() )
-        {
-            return FALSE;
+        if (!$object->add()) {
+            return false;
         }
 
 
         // duplicate has_one_relationship types
-        if ( $has_one === TRUE )
-        {
-            foreach ( $this->has_one_relationship as $table => $link )
-            {
+        if ($has_one === true) {
+            foreach ($this->has_one_relationship as $table => $link) {
                 $old_relationship = $this->$table();
 
-                if ( is_object( $old_relationship ))
-                {
-                    if ( !$id = $old_relationship->duplicate_object() )
-                    {
-                        return FALSE;
+                if (is_object($old_relationship)) {
+                    if (!$id = $old_relationship->duplicate_object()) {
+                        return false;
                     }
 
-                    $new_relationship = new db_object( $table, $id );
-                    $new_relationship->set_attribute( $link, $object->get_id() );
+                    $new_relationship = new db_object($table, $id);
+                    $new_relationship->set_attribute($link, $object->get_id());
                 }
             }
         }
 
 
         // duplicate has_many_relationship types
-        if ( $has_many === TRUE )
-        {
-            foreach ( $this->has_many_relationship as $table => $link )
-            {
-                foreach ( $this->$table() as $old_relationship )
-                {
-                    if ( is_object( $old_relationship ))
-                    {
-                        if ( !$id = $old_relationship->duplicate_object() )
-                        {
-                            return FALSE;
+        if ($has_many === true) {
+            foreach ($this->has_many_relationship as $table => $link) {
+                foreach ($this->$table() as $old_relationship) {
+                    if (is_object($old_relationship)) {
+                        if (!$id = $old_relationship->duplicate_object()) {
+                            return false;
                         }
 
-                        $new_relationship = new db_object( $table, $id );
-                        $new_relationship->set_attribute( $link, $object->get_id() );
+                        $new_relationship = new db_object($table, $id);
+                        $new_relationship->set_attribute($link, $object->get_id());
                     }
                 }
             }
@@ -1660,7 +1620,8 @@ class db_object
                 //@todo should this return the first matching record's id??  The oldest??  The most recent??
                 if (is_array($entry[0])) {
                     return $entry[0]['id'];
-                } else {
+                }
+                else {
                     return $entry['id'];
                 }
             }
@@ -1678,21 +1639,17 @@ class db_object
             $sd_obj = new db_object($this->table_name, $sd_id);
 
             $related_tables = $this->get_db_relationship_tables();
-            foreach ($related_tables as $related_table)
-            {
+            foreach ($related_tables as $related_table) {
                 $relationship_type = $this->get_db_relationship_type($related_table);
 
-                switch ($relationship_type)
-                {
+                switch ($relationship_type) {
                     case 'has_one':
                         if ($related_db_object = $this->get_child_object($related_table))
                             $related_db_object->undelete();
                         break;
                     case 'has_many':
-                        if ($related_db_recordset = $this->get_child_object($related_table))
-                        {
-                            foreach ($related_db_recordset as $related_db_object)
-                            {
+                        if ($related_db_recordset = $this->get_child_object($related_table)) {
+                            foreach ($related_db_recordset as $related_db_object) {
                                 $related_db_object->undelete();
                             }
                         }
@@ -1701,16 +1658,17 @@ class db_object
                         break;
                 }
             }
-            $sd_obj->set_attribute( 'deleted', '0', $force_update=TRUE, $check_acceptable_attribute=TRUE, $metadata_override=FALSE );
+            $sd_obj->set_attribute('deleted', '0', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false);
 
             // return the correct type of object.
             if (get_class($this) == 'db_object') {
                 $this->__construct($sd_obj->table_name, $sd_obj->get_id());
-            } else {
+            }
+            else {
                 $this->__construct($sd_obj->get_id());
             }
 
-            return TRUE;
+            return true;
         }
         return false;
     }
@@ -1727,18 +1685,17 @@ class db_object
      * @return str
      * @author Nick Whitt
      */
-    public function get_attribute_type( $attribute, $complete=false )
+    public function get_attribute_type($attribute, $complete=false)
     {
-        if ( !$this->is_acceptable_attribute( $attribute ))
-        {
-            throw new Exception( 'Requested type of invalid attribute: "' . $attribute . '"' );
+        if (!$this->is_acceptable_attribute($attribute)) {
+            throw new Exception('Requested type of invalid attribute: "' . $attribute . '"');
         }
 
-        $types = explode( '(', $this->table_info[$attribute]['Type'] );
-        if($complete == false){
+        $types = explode('(', $this->table_info[$attribute]['Type']);
+        if ($complete == false) {
             return $types[0];
         }
-        else{
+        else {
             return $this->table_info[$attribute]['Type'];
         }
     }
@@ -1753,18 +1710,16 @@ class db_object
     public function get_inserter_object()
     {
         // check meta field exists
-        if ( !in_array( 'inserted_by', $this->metadata_fields ))
-        {
-            return FALSE;
+        if (!in_array('inserted_by', $this->metadata_fields)) {
+            return false;
         }
 
         // ensure valid foreign key
-        if ( !$this->get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $this->inserted_by )))
-        {
-            return FALSE;
+        if (!$this->get_single_field_value(DB_OBJECT_USER_TABLE, 'id', array('id' => $this->inserted_by))) {
+            return false;
         }
 
-        return $this->get_parent_object( 'inserted_by', DB_OBJECT_USER_TABLE );
+        return $this->get_parent_object('inserted_by', DB_OBJECT_USER_TABLE);
     }
 
     /**
@@ -1776,17 +1731,15 @@ class db_object
      */
     public function get_updater_object()
     {
-        if ( !in_array( 'updated_by', $this->metadata_fields ))
-        {
-            return FALSE;
+        if (!in_array('updated_by', $this->metadata_fields)) {
+            return false;
         }
 
-        if ( !$this->get_single_field_value( DB_OBJECT_USER_TABLE, 'id', array( 'id' => $this->updated_by )))
-        {
-            return FALSE;
+        if (!$this->get_single_field_value(DB_OBJECT_USER_TABLE, 'id', array('id' => $this->updated_by))) {
+            return false;
         }
 
-        return $this->get_parent_object( 'updated_by', DB_OBJECT_USER_TABLE );
+        return $this->get_parent_object('updated_by', DB_OBJECT_USER_TABLE);
     }
 
     /**
@@ -1802,8 +1755,7 @@ class db_object
     public function get_editor_object()
     {
         // check updater first
-        if ( in_array( 'updated_by', $this->metadata_fields ) and $this->updated_by )
-        {
+        if (in_array('updated_by', $this->metadata_fields) and $this->updated_by) {
             return $this->get_updater_object();
         }
 
@@ -1822,13 +1774,13 @@ class db_object
      * @return str
      * @author Nick Whitt
      */
-    public function get_editor_time( $format='Y-m-d' )
+    public function get_editor_time($format='Y-m-d')
     {
-        if ( in_array( 'updated_on', $this->metadata_fields ) and ($this->updated_on == date('Y-m-d H:i:s', strtotime($this->updated_on)))) {
-            return date( $format, strtotime( $this->updated_on ));
+        if (in_array('updated_on', $this->metadata_fields) and ($this->updated_on == date('Y-m-d H:i:s', strtotime($this->updated_on)))) {
+            return date($format, strtotime($this->updated_on));
         }
-        elseif ( in_array( 'inserted_on', $this->metadata_fields ) and ($this->inserted_on == date('Y-m-d H:i:s', strtotime($this->inserted_on)))) {
-            return date( $format, strtotime( $this->inserted_on ));
+        elseif (in_array('inserted_on', $this->metadata_fields) and ($this->inserted_on == date('Y-m-d H:i:s', strtotime($this->inserted_on)))) {
+            return date($format, strtotime($this->inserted_on));
         }
 
         return false;
@@ -1852,12 +1804,12 @@ class db_object
      */
     public function filter_attribute_as($attribute, $content_type=null) {
     //If null was passed, automatically determine the best content type
-        if($content_type == null) {
+        if ($content_type == null) {
             $this->attribute_content_types[$attribute] = $this->get_content_type_by_sql_type($attribute);
             return true;
         }
         //Else see if a valid type was entered
-        elseif($this->get_valid_filter($content_type)) {
+        elseif ($this->get_valid_filter($content_type)) {
             $this->attribute_content_types[$attribute] = $content_type;
             return true;
         }
@@ -1873,15 +1825,15 @@ class db_object
      * @return bool
      * @author David Prater
      */
-    public function filter_all_attributes($content_type = null){
-        if($content_type == null){
-            foreach($this->attributes as $attribute => $value){
+    public function filter_all_attributes($content_type = null) {
+        if ($content_type == null) {
+            foreach($this->attributes as $attribute => $value) {
                 $this->attribute_content_types[$attribute] = $this->get_content_type_by_sql_type($attribute);
             }
             return true;
         }
-        elseif($this->get_valid_filter($content_type)){
-            foreach($this->attributes as $attribute => $value){
+        elseif ($this->get_valid_filter($content_type)) {
+            foreach($this->attributes as $attribute => $value) {
                 $this->attribute_content_types[$attribute] = $content_type;
             }
             return true;
@@ -1889,7 +1841,7 @@ class db_object
         else return false;
     }
 
-    public function force_no_filtering($bool){
+    public function force_no_filtering($bool) {
         $this->force_no_filtering = $bool;
     }
 
@@ -1901,18 +1853,18 @@ class db_object
      * @param any $value
      * @author David Prater
      */
-    protected function filter_attribute($attribute, $value){
+    protected function filter_attribute($attribute, $value) {
         //Ensure there is a content type set for this attribute
-        if(!isset($this->attribute_content_types[$attribute]) or $this->attribute_content_types[$attribute] == 'raw'){
+        if (!isset($this->attribute_content_types[$attribute]) or $this->attribute_content_types[$attribute] == 'raw') {
             return $value;
         }
 
         //If we were passed a null value, see if that's allowed for the field,
         //and if so, return it. Otherwise, return the default
-        if($value === null and $this->table_info[$attribute]['Null'] == 'YES'){
+        if ($value === null and $this->table_info[$attribute]['Null'] == 'YES') {
             return $value;
         }
-        elseif($value === null){
+        elseif ($value === null) {
             return $this->table_info[$attribute]['Default'];
         }
 
@@ -1925,7 +1877,7 @@ class db_object
         $flags = $flags | FILTER_FLAG_NO_ENCODE_QUOTES;
 
         //This will only be set if we are dealing with an enum
-        if(isset($filter_values['enum_vals'])){
+        if (isset($filter_values['enum_vals'])) {
             $enum_vals = $filter_values['enum_vals'];
         }
 
@@ -1933,29 +1885,29 @@ class db_object
         $content_type = $this->attribute_content_types[$attribute];
 
         //Use a regex and casting to filter ints
-        if($content_type == 'int'){
+        if ($content_type == 'int') {
             $clean_var = (int)preg_replace($filter, '', $value);
         }
         //Use a regex to filter dates
-        elseif($content_type == 'date'){
+        elseif ($content_type == 'date') {
             $clean_var = preg_replace($filter, '', $value);
         }
         //If this is an enum, determine if this a valid enum value
-        elseif(isset($enum_vals)){
-            if(in_array($value, $enum_vals)){
+        elseif (isset($enum_vals)) {
+            if (in_array($value, $enum_vals)) {
                 $clean_var = $value;
             }
             //If it's invalid, just return the default enum value
             else $clean_var = $this->table_info[$attribute]['Default'];
         }
         //If this was not a special case, sanitize with filter_var
-        else{
+        else {
             $clean_var = filter_var($value, $filter, $flags);
         }
 
         //chars need some secondary cleaning as only matching pairs of tags get filtered
         //with PHP's filter
-        if($content_type == 'char'){
+        if ($content_type == 'char') {
             $clean_var = preg_replace('/[<>]/', '', $clean_var);
         }
 
@@ -1974,7 +1926,7 @@ class db_object
         //Check if there is a valid filter for this content type
         $content_type = $this->attribute_content_types[$attribute];
         $filter = $this->get_valid_filter($content_type);
-        if($filter == false){
+        if ($filter == false) {
             return false;
         }
 
@@ -1985,7 +1937,7 @@ class db_object
         $filter_values['flags'] = $flags;
 
         //If this is an enum, store all of its valid values
-        if($content_type == 'enum' and $filter == 'enum'){
+        if ($content_type == 'enum' and $filter == 'enum') {
             $filter_values['enum_vals'] = $this->tokenize_enum($attribute);
         }
 
@@ -2000,46 +1952,46 @@ class db_object
      * @param array $type
      * @author David Prater
      */
-    protected function get_content_type_by_sql_type($attribute){
-        if($attribute == null or $attribute == false){
+    protected function get_content_type_by_sql_type($attribute) {
+        if ($attribute == null or $attribute == false) {
             return false;
         }
 
         $sql_type = explode(' ', $this->get_attribute_type($attribute, true));
         $content_type = '';
 
-        if(preg_match('/^.*int[(]?/', $sql_type[0])){
+        if (preg_match('/^.*int[(]?/', $sql_type[0])) {
             $content_type = 'int';
         }
-        elseif(preg_match('/^.*char[(]?/', $sql_type[0])){
+        elseif (preg_match('/^.*char[(]?/', $sql_type[0])) {
             $content_type = 'char';
         }
-        elseif(preg_match('/^.*text[(]?/', $sql_type[0])){
+        elseif (preg_match('/^.*text[(]?/', $sql_type[0])) {
             $content_type = 'char';
         }
-        elseif(preg_match('/^float[(]?/', $sql_type[0])){
+        elseif (preg_match('/^float[(]?/', $sql_type[0])) {
             $content_type = 'float';
         }
-        elseif(preg_match('/^decimal[(]?/', $sql_type[0])){
+        elseif (preg_match('/^decimal[(]?/', $sql_type[0])) {
             $content_type = 'float';
         }
-        elseif(preg_match('/^double[(]?/', $sql_type[0])){
+        elseif (preg_match('/^double[(]?/', $sql_type[0])) {
             $content_type = 'float';
         }
-        elseif(preg_match('/^time[(]?/', $sql_type[0])){
+        elseif (preg_match('/^time[(]?/', $sql_type[0])) {
             $content_type = 'date';
         }
-        elseif(preg_match('/^date.*[(]?/', $sql_type[0])){
+        elseif (preg_match('/^date.*[(]?/', $sql_type[0])) {
             $content_type = 'date';
         }
-        elseif(preg_match('/^.*enum[(]?/', $sql_type[0])){
+        elseif (preg_match('/^.*enum[(]?/', $sql_type[0])) {
             $content_type = 'enum';
         }
-        elseif(preg_match('/.*blob.*/', $sql_type[0])){
-            $this->force_no_filtering(TRUE);
+        elseif (preg_match('/.*blob.*/', $sql_type[0])) {
+            $this->force_no_filtering(true);
             $content_type = 'raw';
         }
-        else{
+        else {
             $content_type = 'name'; //Basic filter that strips HTML tags, newlines, and ASCII values < 32. Quotes are not escaped.
         }
 
@@ -2054,7 +2006,7 @@ class db_object
      * @return Filter or bool
      * @author David Prater
      */
-    protected function get_valid_filter($content_type){
+    protected function get_valid_filter($content_type) {
         $valid_types['char'] = FILTER_SANITIZE_STRING;
         $valid_types['int'] = '/[^\d\.\-]/';
         $valid_types['float'] = FILTER_SANITIZE_NUMBER_FLOAT;
@@ -2066,7 +2018,7 @@ class db_object
         $valid_types['raw'] = 'raw';
         $valid_types['journal'] = FILTER_SANITIZE_STRING; //Strip tags, but allow quotes and newlines
 
-        if(array_key_exists($content_type, $valid_types)){
+        if (array_key_exists($content_type, $valid_types)) {
             return $valid_types[$content_type];
         }
         else return false;
@@ -2086,7 +2038,7 @@ class db_object
         $valid_flags['name'] = FILTER_FLAG_STRIP_LOW | FILTER_FLAG_NO_ENCODE_QUOTES;
         $valid_flags['journal'] = FILTER_FLAG_NO_ENCODE_QUOTES;
 
-        if(array_key_exists($filter, $valid_flags)){
+        if (array_key_exists($filter, $valid_flags)) {
             return $valid_flags[$filter];
         }
         else return null;
@@ -2102,11 +2054,11 @@ class db_object
     public function tokenize_enum($attribute) {
         $sql_type = $this->get_attribute_type($attribute, true);
         //Try and ensure this is actually an enum
-        if(!preg_match('/enum/', $sql_type)){
+        if (!preg_match('/enum/', $sql_type)) {
             return false;
         }
 
-        //Prune the enum( from the beginning, the ) from the end, and the string literal quotes
+        //Prune the enum(from the beginning, the) from the end, and the string literal quotes
         $sql_type = preg_replace('/(^enum[(]|[)]$|\')/', '', $sql_type);
         $sql_type = explode(',', $sql_type);
 
@@ -2253,22 +2205,22 @@ class db_object
             foreach ($fields as $field) {
                 if ($select == '') {
                     $select = 'SELECT ';
-                } else {
+                }
+                else {
                     $select .= ', ';
                 }
 
                 if (strpos($field, '(')) {
                     $select .= mysql_real_escape_string(str_replace(array('(', ')', '.'), array('(`', '`)', '`.`'), $field));
-                } else {
-                    if (strpos($field, '*'))
-                    {
+                }
+                else {
+                    if (strpos($field, '*')) {
                         $search = array('.');
                         $replace = array('`.');
 
                         $select .= '`' . mysql_real_escape_string(str_replace($search, $replace, $field));
                     }
-                    else
-                    {
+                    else {
                         $search = array('.', ' as ', ' AS ');
                         $replace = array('`.`', '` AS `', '` AS `');
 
@@ -2312,7 +2264,7 @@ class db_object
                     if (strtoupper(substr($where_clause, 0, 6)) == 'WHERE ') {
                         $where_clause = trim(substr($where_clause, 6));
                     }
-                    elseif (strtoupper(substr($where_clause, 0, 4 )) == 'AND ') {
+                    elseif (strtoupper(substr($where_clause, 0, 4)) == 'AND ') {
                         $where_clause = trim(substr($where_clause, 4));
                     }
                     elseif (strtoupper(substr($where_clause, 0, 3)) == 'OR ') {
@@ -2354,7 +2306,8 @@ class db_object
                 foreach ($group_by as $group_by_part) {
                     if ($group_by_clause == '') {
                         $group_by_clause = ' GROUP BY ';
-                    } else {
+                    }
+                    else {
                         $group_by_clause .= ', ';
                     }
 
@@ -2380,7 +2333,8 @@ class db_object
 
                     if ($order_by_clause == '') {
                         $order_by_clause = ' ORDER BY ';
-                    } else {
+                    }
+                    else {
                         $order_by_clause .= ', ';
                     }
 
@@ -2388,14 +2342,16 @@ class db_object
 
                     if (strpos($order_by_part[0], '(')) {
                         $order_by_clause .= mysql_real_escape_string(str_replace(array('(', ')', '.'), array('(`', '`)', '`.`'), $order_by_part[0]));
-                    } else {
+                    }
+                    else {
                         $order_by_clause .= '`'.mysql_real_escape_string(str_replace('.', '`.`', $order_by_part[0])).'`';
                     }
 
                     if (isset($order_by_part[1])) {
                         if (strtolower($order_by_part[1]) == 'desc') {
                             $order_by_clause .= ' DESC ';
-                        } else {
+                        }
+                        else {
                             $order_by_clause .= ' ASC ';
                         }
                     }

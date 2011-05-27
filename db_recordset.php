@@ -117,7 +117,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      * @param boolen $include_deleted
      * @return boolean success or failure
      */
-    public function __construct( $table_name=NULL, $constraints=NULL, $autodiscover_class=TRUE, $sort_order=NULL, $array_key_field_name=NULL, $include_deleted=FALSE )
+    public function __construct($table_name=NULL, $constraints=NULL, $autodiscover_class=TRUE, $sort_order=NULL, $array_key_field_name=NULL, $include_deleted=FALSE)
     {
         if (strlen(trim($table_name)) == 0) {
             throw new Exception('Table name cannot be empty');
@@ -134,16 +134,16 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
         // set the discovered class
         $this->autodiscover_class = $autodiscover_class;
-        if ( $this->autodiscover_class )
-        {
-            $this->set_discovered_class( $this->table_name );
+        if ($this->autodiscover_class) {
+            $this->set_discovered_class($this->table_name);
         }
 
         $this->set_sort_order($sort_order);
 
         if ($array_key_field_name) {
             $this->array_key_field_name = $array_key_field_name;
-        } else {
+        }
+        else {
             $this->array_key_field_name = $this->primary_key_field_name;
         }
 
@@ -167,7 +167,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      * @return bool
      * @author Nick Whitt
      */
-    public function set_discovered_class( $class_name )
+    public function set_discovered_class($class_name)
     {
         // We check for this in the if statement below
         $singular_class_name = '';
@@ -175,10 +175,11 @@ class db_recordset implements ArrayAccess, Iterator, Countable
             $singular_class_name = substr($class_name, 0, strlen($class_name)-1);
         }
 
-        if ( class_exists( $class_name ) && is_subclass_of( $class_name, 'db_object' )) {
+        if (class_exists($class_name) && is_subclass_of($class_name, 'db_object')) {
             $this->discovered_class = $class_name;
             return TRUE;
-        } elseif ( $singular_class_name != '' && class_exists( $singular_class_name ) && is_subclass_of( $singular_class_name, 'db_object' )) {
+        }
+        elseif ($singular_class_name != '' && class_exists($singular_class_name) && is_subclass_of($singular_class_name, 'db_object')) {
             $this->discovered_class = $singular_class_name;
             return TRUE;
         }
@@ -199,8 +200,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     public function set_recordset_limit($limit, $offset=NULL)
     {
-        if ($limit < 1)
-        {
+        if ($limit < 1) {
             throw new Exception('Limit must be greater than 0');
         }
 
@@ -215,8 +215,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
         $this->limit = $limit;
 
-        if (! is_null($offset))
-        {
+        if (! is_null($offset)) {
             $this->offset = $offset;
         }
 
@@ -241,8 +240,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
         // If this isn't the first time we're calling fetch_data then we'll use the
         // constraints and limit the possible results to the subset we've already fetched.
-        if (!is_null($this->db_result))
-        {
+        if (!is_null($this->db_result)) {
             $ids = $this->get_field_values('');
 
             // Allows us to add in other records to the recordset
@@ -259,20 +257,16 @@ class db_recordset implements ArrayAccess, Iterator, Countable
 
         // Construct the sort by clause
         $sort_array = array();
-        if (!empty($this->sort_order))
-        {
-            foreach($this->sort_order as $sort_field => $sort_type)
-            {
+        if (!empty($this->sort_order)) {
+            foreach($this->sort_order as $sort_field => $sort_type) {
                 $sort_array[] = array($sort_field, $sort_type);
             }
         }
 
         // Construct the limit clause
         $limit_by = '';
-        if (! is_null($this->limit))
-        {
-            if (! is_null($this->offset))
-            {
+        if (! is_null($this->limit)) {
+            if (! is_null($this->offset)) {
                 $limit_by .= $this->offset.', ';
             }
 
@@ -293,37 +287,33 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         $where_clause = array();
             // populate based on given constraints
         if (null !== $constraints) {
-            foreach ($constraints as $field_name => $values)
-            {
+            foreach ($constraints as $field_name => $values) {
                 // If operator is not specified, then assume "="
-                if ( strpos( $field_name, ' ' ) === FALSE )
-                {
+                if (strpos($field_name, ' ') === FALSE) {
                     if (null === $values) {
                         //  Handle a special case where checking to see if something is exactly NULL
                         $where_clause[] = '`' . mysql_real_escape_string($field_name) . '` IS NULL';
-                    } else if (! is_array($values)) {
+                    }
+                    else if (! is_array($values)) {
                         //  $values is a scalar value
                         $where_clause[] = '`' . mysql_real_escape_string($field_name) . "` = '" . mysql_real_escape_string($values) . "'";
-                    } else if ($clause = get_sql_in_string($values, $field_name)) {
+                    }
+                    else if ($clause = get_sql_in_string($values, $field_name)) {
                         $where_clause[] = $clause;
                     }
                 }
-                else
-                {
+                else {
                     // get the field and operator which is separated by a space
-                    $field = substr( $field_name, 0, strpos( $field_name, ' ' ));
-                    $operator = substr( $field_name, strpos( $field_name, ' ' ) + 1 );
+                    $field = substr($field_name, 0, strpos($field_name, ' '));
+                    $operator = substr($field_name, strpos($field_name, ' ') + 1);
 
                     // allow for NOT IN
-                    if ( is_array( $values ))
-                    {
-                        if ( $operator == '!=' and $clause = get_sql_in_string( $values, $field, TRUE ))
-                        {
+                    if (is_array($values)) {
+                        if ($operator == '!=' and $clause = get_sql_in_string($values, $field, TRUE)) {
                             $where_clause[] = $clause;
                         }
-                        else
-                        {
-                            throw new Exception( 'Invalid constraint values' );
+                        else {
+                            throw new Exception('Invalid constraint values');
                         }
                     }
                     // attempt to create a query using operators such as "<" or ">="
@@ -382,8 +372,8 @@ class db_recordset implements ArrayAccess, Iterator, Countable
     {
         if (is_array($sort_array)) {
             foreach ($sort_array as $attribute => $order) {
-                if ( !$this->db_object->is_acceptable_attribute( $attribute )) {
-                    throw new Exception( 'Trying to sort with an invalid attribute: "' . $attribute . '"' );
+                if (!$this->db_object->is_acceptable_attribute($attribute)) {
+                    throw new Exception('Trying to sort with an invalid attribute: "' . $attribute . '"');
                 }
             }
         }
@@ -404,9 +394,8 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         if ($id != NULL)
             $this->fetch_row($id);
 
-        if ( !is_null( $this->discovered_class ))
-        {
-            return new $this->discovered_class( NULL, $this->table_info, $this->current_row_data );
+        if (!is_null($this->discovered_class)) {
+            return new $this->discovered_class(NULL, $this->table_info, $this->current_row_data);
         }
         $db_object = new db_object($this->table_name, NULL, $this->table_info, $this->current_row_data);
         return $db_object;
@@ -425,46 +414,38 @@ class db_recordset implements ArrayAccess, Iterator, Countable
     {
         // Make sure the array is populated if they pass an ID
         // We only want to create the array if we HAVE to. (for memory reasons)
-        if ($id != NULL)
-        {
+        if ($id != NULL) {
             if ($this->dirty_index === true)
                 $this->refresh_index();
         }
 
         // If we are using the index array and it needs to be rebuilt
-        if (!empty($this->index_array_key_map) && $this->dirty_index === true)
-        {
+        if (!empty($this->index_array_key_map) && $this->dirty_index === true) {
             $this->refresh_index();
         }
 
-        if ($this->count() > 0)
-        {
+        if ($this->count() > 0) {
             // If we are using this like an array then use the map to determine what rows we are dealing with.
-            if (!empty($this->index_array_key_map))
-            {
-                if ($id != NULL)
-                {
+            if (!empty($this->index_array_key_map)) {
+                if ($id != NULL) {
                     // Get the position we are in right now so we can return the mysql result pointer to it later.
                     $original_position = key($this->index_array_key_map);
                     $array_key = array_search($id, $this->index_array_key_map);
 
                     // The record doesn't exist.
-                    if ($array_key === FALSE)
-                    {
+                    if ($array_key === FALSE) {
                         $this->fetch_row_success = FALSE;
                         return $this->fetch_row_success;
                     }
 
                     mysql_data_seek($this->db_result, $array_key);
                 }
-                elseif (current($this->index_array_key_map) !== FALSE)
-                {
+                elseif (current($this->index_array_key_map) !== FALSE) {
                     mysql_data_seek($this->db_result, key($this->index_array_key_map));
                     next($this->index_array_key_map);
                 }
                 // If we're at the end of the array
-                else
-                {
+                else {
                     $this->fetch_row_success = FALSE;
                     return $this->fetch_row_success;   // We don't want to grab any more data.
                 }
@@ -495,21 +476,17 @@ class db_recordset implements ArrayAccess, Iterator, Countable
             $this->fetch_data();
 
         // Make sure it really needs refreshed.
-        if ($this->dirty_index === true)
-        {
-            if ($this->count() > 0)
-            {
+        if ($this->dirty_index === true) {
+            if ($this->count() > 0) {
                 $this->index_array_key_map = array();
 
                 mysql_data_seek($this->db_result, 0);
 
-                while ($data_array = mysql_fetch_assoc($this->db_result))
-                {
+                while ($data_array = mysql_fetch_assoc($this->db_result)) {
                     $this->index_array_key_map[] = $data_array[$this->array_key_field_name];
                 }
             }
-            else
-            {
+            else {
                 $this->index_array_key_map = array();
             }
 
@@ -522,8 +499,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     public function set_constraints($constraints)
     {
-        if ($this->constraints != NULL)
-        {
+        if ($this->constraints != NULL) {
             if ($this->dirty_data === true)
                 $this->fetch_data();
             if ($this->dirty_index === true)
@@ -536,16 +512,14 @@ class db_recordset implements ArrayAccess, Iterator, Countable
     }
 
     public function format_constraints($constraints) {
-        if (is_null($constraints))
-        {
+        if (is_null($constraints)) {
             // Do nothing here.
             // Just leave the constraints as they were.
         }
         // If we just have a list of ids then figure out the primary key
         // and set up the contraints array properly.
         // Also, if we were passed an empty array then we assume it means that this recordset is to be "empty".
-        elseif (is_numeric(key($constraints)) || (is_array($constraints) && empty($constraints)))
-        {
+        elseif (is_numeric(key($constraints)) || (is_array($constraints) && empty($constraints))) {
             $constraints = array($this->db_object->get_primary_key_field() => $constraints);
         }
         return $constraints;
@@ -614,8 +588,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         if ($this->dirty_data === true)
             $this->fetch_data();
 
-        if ($this->count() > 0)
-        {
+        if ($this->count() > 0) {
             if ($this->index_array_key_map)
                 reset($this->index_array_key_map);
             else
@@ -688,12 +661,10 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     public function get_field_values($field='')
     {
-        if ($field == '')
-        {
+        if ($field == '') {
             $field = $this->primary_key_field_name;
         }
-        elseif (! in_array($field, $this->columns))
-        {
+        elseif (! in_array($field, $this->columns)) {
             // throw error? incorrect field name
             return false;
         }
@@ -703,20 +674,17 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         }
 
 
-        if ($this->index_array_key_map && $field == $this->primary_key_field_name)
-        {
+        if ($this->index_array_key_map && $field == $this->primary_key_field_name) {
             if ($this->dirty_index === true)
                 $this->refresh_index();
 
             return $this->index_array_key_map;
         }
-        else
-        {
+        else {
             $values = array();
             $count = $this->count();
 
-            for ($i=0; $i<$count; $i++)
-            {
+            for ($i=0; $i<$count; $i++) {
                 $values[] = mysql_result($this->db_result, $i, $field);
             }
 
@@ -770,14 +738,12 @@ class db_recordset implements ArrayAccess, Iterator, Countable
     public function first()
     {
         // preserve internal sort order with get_field_values()
-        if ( !$ids = $this->get_field_values() )
-        {
+        if (!$ids = $this->get_field_values()) {
             // invalid recordset
             return FALSE;
         }
 
-        if ( empty( $ids ))
-        {
+        if (empty($ids)) {
             // what about empty recordset?
         }
 
