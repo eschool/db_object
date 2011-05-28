@@ -326,9 +326,9 @@ class db_object {
                     $time_string = date('Y-m-d H:i:s');
                     $this->set_attribute('inserted_on', $time_string, false, true, false);
                 }
-                if (false !== ($current_user_id = db_object_get_user_id())) {
-                    if (is_numeric($current_user_id)) {
-                        if ($this->is_acceptable_attribute('inserted_by')) {
+                if ($this->is_acceptable_attribute('inserted_by') && function_exists('db_object_get_user_id')) {
+                    if (false !== ($current_user_id = db_object_get_user_id())) {
+                        if (is_numeric($current_user_id)) {
                             $this->set_attribute('inserted_by', $current_user_id, false, true, false);
                         }
                     }
@@ -454,9 +454,9 @@ class db_object {
                     $time_string = date('Y-m-d H:i:s');
                     $this->set_attribute('updated_on', $time_string, false, true, false);
                 }
-                if (false !== ($current_user_id = db_object_get_user_id())) {
-                    if (is_numeric($current_user_id)) {
-                        if ($this->is_acceptable_attribute('updated_by')) {
+                if ($this->is_acceptable_attribute('updated_by') && function_exists('db_object_get_user_id')) {
+                    if (false !== ($current_user_id = db_object_get_user_id())) {
+                        if (is_numeric($current_user_id)) {
                             $this->set_attribute('updated_by', $current_user_id, false, true, false);
                         }
                     }
