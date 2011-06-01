@@ -1,6 +1,6 @@
 <?php
 
-require_once 'db_object.php';
+require_once dirname(__FILE__) . '/db_object.php';
 
 class db_recordset implements ArrayAccess, Iterator, Countable
 {
