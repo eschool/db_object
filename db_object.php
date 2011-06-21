@@ -165,6 +165,8 @@ class db_object {
                                   'after_add'       => array()
                                );
 
+   public $logging_enabled;
+
     /**
      * PHP5-style constructor
      *
@@ -397,15 +399,16 @@ class db_object {
             $this->execute_callbacks('before_add');
 
             if ($this->query($sql_string)) {
-                /**
-                 * Retrieve the auto_incremented primary key
-                 */
+                // Retrieve the auto_incremented primary key
                 $this->set_attribute($this->primary_key_field, mysql_insert_id(), false);
-                /**
-                 * Unset status variables
-                 */
-                $this->modified_attributes = array();
                 $this->null_instantiated = false;
+
+                if ($this->logging_enabled === true) {
+                    $this->log_changes();
+                }
+
+                // Unset status variables
+                $this->modified_attributes = array();
 
                 // Call the callbacks
                 $this->execute_callbacks('after_add');
@@ -528,6 +531,10 @@ class db_object {
             $this->execute_callbacks('before_update');
 
             if ($this->query($sql_string)) {
+                if ($this->logging_enabled === true) {
+                    $this->log_changes();
+                }
+
                 $this->modified_attributes = array();
 
                 // Call the callbacks
@@ -593,7 +600,9 @@ class db_object {
         }
 
         if ($hard !== true && in_array('deleted', $this->metadata_fields)) {
-            $return_value = $this->set_attribute('deleted', '1', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false);
+            if ($return_value = $this->set_attribute('deleted', '1', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false)) {
+                $this->log_attribute_change('deleted', true);
+            }
 
             // Call the callbacks
             $this->execute_callbacks('after_delete');
@@ -1658,7 +1667,9 @@ class db_object {
                         break;
                 }
             }
-            $sd_obj->set_attribute('deleted', '0', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false);
+            if ($sd_obj->set_attribute('deleted', '0', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false)) {
+                $this->log_attribute_change('deleted', false);
+            }
 
             // return the correct type of object.
             if (get_class($this) == 'db_object') {
@@ -2392,4 +2403,90 @@ class db_object {
             return $record->$field_name;
         }
     }
+
+    private function log_changes() {
+        foreach (array_keys($this->modified_attributes) as $attribute) {
+
+            // Do not log changes to metadata fields
+            if (in_array($attribute, $this->metadata_fields)) {
+                continue;
+            }
+
+            $this->log_attribute_change('$attribute', $this->$attribute);
+        }
+    }
+
+    private function log_attribute_change($attribute, $value) {
+        $log = new db_object('db_object_log');
+        $log->table     = $this->table_name;
+        $log->record_id = $this->get_id();
+        $log->attribute = $attribute;
+        $log->value     = $value;
+        return $log->add();
+    }
+
+    public function get_object_restored_to_date($date) {
+
+        $historical_object = clone $this;
+
+        $constraints = array('table'          => $historical_object->table_name,
+                             'record_id'      => $historical_object->get_id(),
+                             'inserted_on <=' => $date
+        );
+
+        $most_recent_metadata = array('inserted_on' => '0000-00-00 00:00:00');
+
+        // If there is a change log for the primary key of this record, its creation was logged
+        $constraints['attribute'] = $this->primary_key_field;
+        $add_was_logged = (bool)db_object::get_single_field_value('db_object_log', 'id', $constraints);
+
+        foreach (array_keys($historical_object->attributes) as $attribute) {
+
+            // Changes to metadata fields are not logged
+            if (in_array($attribute, $historical_object->metadata_fields)) {
+                continue;
+            }
+
+            $constraints['attribute'] = $attribute;
+            $changes_to_attribute = new db_recordset('db_object_log', $constraints, false, array('inserted_on' => 'DESC'));
+
+            if (empty($changes_to_attribute)) {
+
+                // If there is not a change record for an attribute and its add was not logged, it is not guaranteed that
+                // there is enough information to recreate this object as it was on the given date
+                if ($add_was_logged === false) {
+                    return false;
+                }
+
+                // There is no change recorded for this attribute, therefore the value on the current record is accurate
+                continue;
+            }
+
+            // $change_nearest_to_requested_date = $changes_to_attribute->current();
+            $change_nearest_to_requested_date = first($changes_to_attribute);
+            $historical_object->set_attribute($attribute, $change_nearest_to_requested_date->value, false);
+
+            // Keep track of the most recent inserted metadata from all the change records used to restore this object
+            if ($change_nearest_to_requested_date->inserted_on > $most_recent_metadata['inserted_on']) {
+                $most_recent_metadata['inserted_on'] = $change_nearest_to_requested_date->inserted_on;
+                $most_recent_metadata['inserted_by'] = $change_nearest_to_requested_date->inserted_by;
+                $most_recent_metadata['inserted_ip'] = $change_nearest_to_requested_date->inserted_ip;
+            }
+        }
+
+        // Use the most recent inserted metadata from the change records as the updated metadata of the historical db_object
+        if ($historical_object->is_acceptable_attribute('updated_on')) {
+            $historical_object->set_attribute('updated_on', $most_recent_metadata['inserted_on'], false);
+        }
+        if ($historical_object->is_acceptable_attribute('updated_by')) {
+            $historical_object->set_attribute('updated_by', $most_recent_metadata['inserted_by'], false);
+        }
+        if ($historical_object->is_acceptable_attribute('updated_ip')) {
+            $historical_object->set_attribute('updated_ip', $most_recent_metadata['inserted_ip'], false);
+        }
+
+        return $historical_object;
+    }
+
+    // TODO: break out some of the logic above so you can request just one historical attribute
 }
