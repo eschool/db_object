@@ -35,93 +35,44 @@ require_once dirname(__FILE__) . '/db_recordset.php';
 
 class db_object {
 
-    /**
-     * All attributes pulled from a database or currently set for the object
-     *
-     * @var array
-     */
+    // An array of all attributes pulled from a database or currently set for the object
     protected $attributes;
 
-    /**
-     * An array to indictate whether or not each attribute of the object has been modified
-     * and/or is in need of being updated or synchronized with the database
-     *
-     * @var array
-     */
+    // An array to indictate whether or not each attribute of the object has been modified
+    // and/or is in need of being updated or synchronized with the database
     protected $modified_attributes;
 
-    /**
-     * An array associating each attribute with a specific content type. This type is used to
-     * determine how to sanitize data before it is inserted into/updated in the database
-     *
-     * @var array
-     */
+    // An array associating each attribute with a specific content type. This type is used to
+    // determine how to sanitize data before it is inserted into/updated in the database
     protected $attribute_content_types;
 
     protected $force_no_filtering;
 
-    /**
-     * Whether or not the object was instantiated with a NULL value, and therefore,
-     * does not represent an actual row in the database yet.  This is useful for
-     * creating new rows via a db_object.
-     *
-     * @var boolean
-     */
+     // A boolean indicating whether or not the object was instantiated with a NULL value, and therefore,
+     // does not represent an actual row in the database yet. This is useful for creating new rows via a db_object.
     public $null_instantiated = false;
 
-    /**
-     * Name of the primary key field
-     *
-     * @var string
-     */
+    // String: Name of the primary key field
     protected $primary_key_field;
 
-    /**
-     * Name of the database table
-     *
-     * @var string
-     */
+    // String: Name of the database table
     public $table_name;
 
-    /**
-     * Table information array
-     *
-     * @var array
-     */
+    // Table information array
     protected $table_info;
 
-    /**
-     * The type of the inserted_on/updated_on columns (both should be same type)
-     *
-     * @var string
-     */
+    // String: The type of the inserted_on/updated_on columns (both should be same type)
     protected $time_column_type;
 
-    /**
-     * An array of all possible metadata fields.  Used to determine whether or not
-     * a particular field is a metadata field.
-     *
-     * @var array
-     */
-    protected $possible_metadata_fields = array(
-                                'inserted_on',
-                                'inserted_by',
-                                'inserted_ip',
-                                'updated_on',
-                                'updated_by',
-                                'updated_ip',
-                                'deleted'
-                               );
+    // An array of all possible metadata fields.  Used to determine whether or not a particular field is a metadata field.
+    protected $possible_metadata_fields = array('inserted_on', 'inserted_by', 'inserted_ip', 'updated_on',
+                                                'updated_by', 'updated_ip', 'deleted');
 
-    /**
-     * The names of fields that hold metadata for this object (e.g., inserted_on)
-     *
-     * @var array
-     */
+    // Array: The names of fields that hold metadata for this object (e.g., inserted_on)
     public $metadata_fields = array();
 
     /**
-     * The names of metadata fields which should not be automatically populated
+     * Array: The names of metadata fields which should not be automatically populated
      * with their related metadata.
      *
      * This array holds a simple list of metadata fields whose values should not be
@@ -129,44 +80,34 @@ class db_object {
      * case of when this is used is when the metadata is manually set or forced
      * by the application, such as when copying fields from one table to another,
      * where the metadata needs to be preserved.
-     *
-     * @var array
      */
     public $metadata_field_override = array();
 
-    /**
-     * These keep track of various types of database relationships.
-     *
-     * An example of the format is:
-     * $this->has_one_relationship['child_table'] = 'foreign_key';
-     *
-     * @var array
-     */
+
+    // Arrays: These keep track of various types of database relationships.    
+    // An example of the format is:
+    // $this->has_one_relationship['child_table'] = 'foreign_key';
     private $has_one_relationship = array();
     private $has_many_relationship = array();
     private $belongs_to_relationship = array();
 
-    // This allows us to cache objects so we don't
-    // waste a query every time.
+    // This allows us to cache objects so we don't waste a query every time.
     protected static $object_cache = array();
 
     // these values are defined by SQL to be text fields
     protected $text_types = array('varchar', 'char', 'enum', 'set', 'tinytext', 'text', 'mediumtext', 'longtext');
 
     // Set up the callback array
-    protected $callbacks = array(
-                                  'before_add'      => array(),
-                                  'before_update'   => array(),
-                                  'before_delete'   => array(),
-                                  'before_save'     => array(),
-                                  'after_save'      => array(),
-                                  'after_delete'    => array(),
-                                  'after_update'    => array(),
-                                  'after_add'       => array()
-                               );
+    protected $callbacks = array('before_add'      => array(),
+                                 'before_update'   => array(),
+                                 'before_delete'   => array(),
+                                 'before_save'     => array(),
+                                 'after_save'      => array(),
+                                 'after_delete'    => array(),
+                                 'after_update'    => array(),
+                                 'after_add'       => array());
 
     /**
-     * PHP5-style constructor
      *
      * @param integer $id
      * @param string $table_name
@@ -191,17 +132,11 @@ class db_object {
             $this->table_info = $table_info;
         }
         else {
-            /**
-             * Check to see if a session is active
-             */
+            // Check to see if a session is active
             if (session_id()) {
-                /**
-                 * Check to see whether or not the table information is cached in the session
-                 */
+                // Check to see whether or not the table information is cached in the session
                 if ((isset($_SESSION['table_column_cache'][$table_name]) && (is_array($_SESSION['table_column_cache'][$table_name]) || $_SESSION['table_column_cache'][$table_name] instanceof ArrayAccess) && (sizeof($_SESSION['table_column_cache'][$table_name]) > 0))) {
-                    /**
-                     * Retrieve the table information from the session cache (this saves a query)
-                     */
+                     // Retrieve the table information from the session cache (this saves a query)
                     $this->table_info = $_SESSION['table_column_cache'][$table_name];
                 }
             }
@@ -266,7 +201,8 @@ class db_object {
             }
 
             return true;
-        } else {
+        }
+        else {
             //  Attempt to retrieve a record
             if ($record = $this->query("SELECT * FROM `" . mysql_real_escape_string($this->table_name) . "` WHERE `" . $this->primary_key_field . "` = '" . mysql_real_escape_string($id) . "'")) {
                 // Successfully retrieved record
@@ -305,9 +241,8 @@ class db_object {
         if (!$this->null_instantiated) {
             throw new Exception('Attempted to add already-existing record');
         }
-        /**
-         * Check for any metadata overrides relating to add/insert
-         */
+
+        // Check for any metadata overrides relating to add/insert
         if (in_array('inserted_on', $this->metadata_field_override) ||
             in_array('inserted_by', $this->metadata_field_override) ||
             in_array('inserted_ip', $this->metadata_field_override)) {
@@ -316,11 +251,9 @@ class db_object {
             else {
                 $metadata_override = false;
             }
-        //  We check if the record has either been modified (to prevent duplicate records) or if they want to force it anyway
+        // We check if the record has either been modified (to prevent duplicate records) or if they want to force it anyway
         if ($this->modified() || $force) {
-            /**
-             * Skip any automatic metadata setting if override is true
-             */
+            // Skip any automatic metadata setting if override is true
             if (!$metadata_override) {
                 if ($this->is_acceptable_attribute('inserted_on')) {
                     $time_string = date('Y-m-d H:i:s');
@@ -397,13 +330,10 @@ class db_object {
             $this->execute_callbacks('before_add');
 
             if ($this->query($sql_string)) {
-                /**
-                 * Retrieve the auto_incremented primary key
-                 */
+                // Retrieve the auto_incremented primary key
                 $this->set_attribute($this->primary_key_field, mysql_insert_id(), false);
-                /**
-                 * Unset status variables
-                 */
+
+                 // Unset status variables
                 $this->modified_attributes = array();
                 $this->null_instantiated = false;
 
@@ -434,9 +364,7 @@ class db_object {
             throw new Exception('Unable to update a null-instantiated record');
         }
 
-        /**
-         * Check for any metadata overrides relating to update
-         */
+        // Check for any metadata overrides relating to update
         if (in_array('updated_on', $this->metadata_field_override) ||
             in_array('updated_by', $this->metadata_field_override) ||
             in_array('updated_ip', $this->metadata_field_override)) {
@@ -446,9 +374,7 @@ class db_object {
                 $metadata_override = false;
             }
         if ($this->modified() || $force) {
-            /**
-             * Skip any automatic metadata setting if override is true
-             */
+            // Skip any automatic metadata setting if override is true
             if (!$metadata_override) {
                 if ($this->is_acceptable_attribute('updated_on')) {
                     $time_string = date('Y-m-d H:i:s');
@@ -473,7 +399,7 @@ class db_object {
             if (is_array($columns) && sizeof($columns) > 0) {
                 $num_columns = sizeof($columns);
                 if (sizeof($values) != $num_columns) {
-                    //  Whoops!  Someone passed the wrong number of values or columns
+                    // Whoops! Someone passed the wrong number of values or columns
                     throw new Exception('Columns array and values array sizes do not match');
                 }
 
@@ -501,26 +427,24 @@ class db_object {
                     $sql_string .= $name_value_pair;
                 }
 
-                //  trim off the last remaining comma
+                // trim off the last remaining comma
                 $sql_string = substr($sql_string, 0, -2);
             }
             else {
                 if (is_string($columns) && strlen($columns) > 0) {
-                    //  $columns is a string and should be treated as one value
+                    // $columns is a string and should be treated as one value
                     if (!is_string($values)) {
-                        //  If $columns is a string, then $values must also be a string
+                        // If $columns is a string, then $values must also be a string
                         throw new Exception('Values must be scalar value when columns is scalar');
-                        //trigger_error('Values must be scalar value when columns is scalar', E_USER_ERROR);
                     }
                 }
                 else {
                     //  Well, what the heck is $columns, then, if it's not a string or array?!
                     throw new Exception('Invalid value/type for columns.  Type must be array or string.');
-                    //trigger_error('Invalid value/type for columns.  Type must be array or string.', E_USER_ERROR);
                 }
             }
 
-            //  Tack on the "where" clause
+            // Tack on the "where" clause
             $sql_string .= " WHERE `" . $this->primary_key_field . "` = '" . $this->get_attribute($this->primary_key_field) . "'";
 
             // Call the callbacks
@@ -567,9 +491,7 @@ class db_object {
         // Call the callbacks
         $this->execute_callbacks('before_delete');
 
-        /**
-         * Delete any declared child relationships
-         */
+        // Delete any declared child relationships
         $related_tables = $this->get_db_relationship_tables();
 
         foreach ($related_tables as $related_table) {
@@ -630,9 +552,7 @@ class db_object {
             throw new Exception('Unable to restore a modified record in object of type ' . $this->table_name);
         }
 
-        /**
-         * Restore any declared child relationships
-         */
+        // Restore any declared child relationships
         $related_tables = $this->get_db_relationship_tables();
 
         foreach ($related_tables as $related_table) {
@@ -741,13 +661,9 @@ class db_object {
      */
     public function get_all_ids()
     {
-        $sql = "
-        SELECT
-        `$this->primary_key_field`
-        FROM
-        `$this->table_name`
-        ";
+        $sql = "SELECT `$this->primary_key_field` FROM `$this->table_name`";
         $result = $this->query($sql);
+        
         if (is_array($result) && sizeof($result) > 0) {
             $ids = array();
             foreach ($result as $row) {
@@ -819,13 +735,9 @@ class db_object {
 
         $this->remove_from_cache($this->table_name, $this->get_id());
 
-        /**
-         * Check if a metadata field is being set
-         */
+        // Check if a metadata field is being set
         if ($metadata_override && in_array($name, $this->metadata_fields) && !in_array($name, $this->metadata_field_override)) {
-            /**
-             * Add this field to the metadata_field_override list
-             */
+            // Add this field to the metadata_field_override list
             $this->metadata_field_override[] = $name;
         }
 
@@ -857,10 +769,7 @@ class db_object {
             }
         }
 
-        /**
-         * Don't run a forced update if the object was null-instantiated, and only run an
-         * update if the data has actually been modified
-         */
+        // Don't run a forced update if the object was null-instantiated, and only run an update if the data has actually been modified
         if ($force_update && !$this->null_instantiated && $this->modified()) {
             if ($this->update()) {
                 $this->modified_attributes = array();
@@ -871,7 +780,7 @@ class db_object {
             }
         }
         else {
-            //  We've successfully completed everything we need to by this point
+            // We've successfully completed everything we need to by this point
             return true;
         }
     }
@@ -895,10 +804,7 @@ class db_object {
                 throw new Exception('Error encountered attempting to set attribute ' . $name);
             }
         }
-        /**
-         * Don't run a forced update if the object was null-instantiated, and only run an
-         * update if the data has actually been modified
-         */
+        // Don't run a forced update if the object was null-instantiated, and only run an update if the data has actually been modified
         if ($force_update && !$this->null_instantiated && $this->modified()) {
             if ($this->update()) {
                 $this->modified_attributes = array();
@@ -909,7 +815,7 @@ class db_object {
             }
         }
         else {
-            //  We've successfully completed everything we need to by this point
+            // We've successfully completed everything we need to by this point
             return true;
         }
     }
@@ -1537,7 +1443,6 @@ class db_object {
             throw new Exception('Unable to duplicate an unstable object');
         }
 
-
         // create an array of values to not duplicate
         $not_to_duplicate = array();
 
@@ -1546,7 +1451,6 @@ class db_object {
         foreach ($this->metadata_fields as $field) {
             $not_to_duplicate[] = $field;
         }
-
 
         // duplicate object
         $object = new db_object($this->table_name);
@@ -1562,7 +1466,6 @@ class db_object {
         if (!$object->add()) {
             return false;
         }
-
 
         // duplicate has_one_relationship types
         if ($has_one === true) {
@@ -1580,7 +1483,6 @@ class db_object {
             }
         }
 
-
         // duplicate has_many_relationship types
         if ($has_many === true) {
             foreach ($this->has_many_relationship as $table => $link) {
@@ -1596,7 +1498,6 @@ class db_object {
                 }
             }
         }
-
 
         // return the ID of our newly created object
         return $object->get_id();
