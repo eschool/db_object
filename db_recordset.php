@@ -154,6 +154,9 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         }
 
         $this->set_constraints($constraints);
+        
+        // Set the pointer back to the beginning, so calling current on a new recordset works
+        $this->rewind();
     }
 
     /**
