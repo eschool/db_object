@@ -2383,9 +2383,17 @@ class db_object {
         return $log->add();
     }
 
+    private function restore_date_indicates_current_object($date) {
+        return $this->is_acceptable_attribute('updated_on') && date('Y-m-d H:i:s', strtotime($date) >= $this->updated_on);
+    }
+
     public function get_object_restored_to_date($date) {
 
         $historical_object = clone $this;
+
+        if ($this->restore_date_indicates_current_object($date)) {
+            return $historical_object;
+        }
 
         $most_recent_metadata = array('changed_on' => '0000-00-00 00:00:00');
         foreach (array_keys($historical_object->attributes) as $attribute) {
@@ -2457,6 +2465,11 @@ class db_object {
     }
 
     public function get_attribute_on_date($attribute, $date) {
+
+        if ($this->restore_date_indicates_current_object($date)) {
+            return $this->$attribute;
+        }
+
         if ($change_nearest_to_requested_date = $this->get_most_recent_attribute_log_before_date($attribute, $date)) {
             return $change_nearest_to_requested_date->value;
         }
