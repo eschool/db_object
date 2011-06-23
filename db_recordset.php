@@ -27,80 +27,45 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      */
     protected $constraints = NULL;
 
-    /**
-     * Generic, empty db_object for this table.
-     * We use it to find the primary key, etc.
-     */
+    // Generic, empty db_object for this table. We use it to find the primary key, etc.
     private $db_object;
 
-    /**
-     * When set to true, db_recordset will attempt to discover the existence of a class by the
-     * same name as the table.
-     *
-     * @var boolean
-     */
+    // Boolean: When set to true, db_recordset will attempt to discover
+    // the existence of a class by the same name as the table.
     protected $autodiscover_class = false;
 
     // this variable is set to the discovered class name
     protected $discovered_class = NULL;
 
-    /**
-     * Stores the sort order for the data.
-     *
-     * The key should be the name of the field and the value should be either "ASC" or "DESC".
-     * The data will be sorted in the same order they are put into the array.
-     *
-     * @var array
-     */
+    // Array: Stores the sort order for the data.
+    // The key should be the name of the field and the value should be either "ASC" or "DESC".
+    // The data will be sorted in the same order they are put into the array.
     protected $sort_order = NULL;
-    /**
-     * This is the field to use as the array key in the $data array.
-     * If no value is passed this the $data array will be a common array.
-     *
-     *
-     * @var string
-     */
+
+    // String: This is the field to use as the array key in the $data array.
+    // If no value is passed this the $data array will be a common array.
     protected $array_key_field_name = NULL;
 
-    /**
-     * Stores the resource returned from the mysql_query() function.
-     *
-     * @var resource
-     */
+    // Resource: Stores the resource returned from the mysql_query() function.
     protected $db_result = NULL;
 
     //  Status attributes
-    /**
-     * When set to true, db_recordset will first process the recordset constraints & fetch
-     * new data before returning any results.
-     *
-     * @var boolean
-     */
+
+    // Boolean: When set to true, db_recordset will first process the recordset
+    // constraints & fetch new data before returning any results.
     protected $dirty_data = true;
     protected $dirty_index = true;
     protected $fetch_row_success = true;
 
-    /**
-     * Allows us to tie the chosen db field, typically the primary key, to a simple array structure.
-     * We will only use this when the object is accessed as an array.
-     *
-     * @var array
-     */
+    // Array: Allows us to tie the chosen db field, typically the primary key, to a simple array structure.
+    // We will only use this when the object is accessed as an array.
     protected $index_array_key_map = NULL;
 
-    /**
-     * Holds the last SQL query to be executed in this object.
-     * Made an attribute for debugging purposes.
-     *
-     * @var string
-     */
+    // String: Holds the last SQL query to be executed in this object.
+    // Made an attribute for debugging purposes.
     private $sql = '';
 
-    /**
-     * Stores the result of mysql_fetch_assoc().
-     *
-     * @var array
-     */
+    // Array: Stores the result of mysql_fetch_assoc().
     protected $current_row_data = array();
 
     protected $limit = NULL;
@@ -279,7 +244,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         $this->sql = db_object::get_sql($this->table_name, '*', $where_clause, $sort_array, '', $limit_by);
         $this->db_result = mysql_query($this->sql);
 
-        //  Final initialization of data & setting of current state
+        // Final initialization of data & setting of current state
         $this->constraints = NULL;
         $this->dirty_data = false;
         $this->dirty_index = true;
@@ -294,11 +259,11 @@ class db_recordset implements ArrayAccess, Iterator, Countable
                 // If operator is not specified, then assume "="
                 if (strpos($field_name, ' ') === FALSE) {
                     if (null === $values) {
-                        //  Handle a special case where checking to see if something is exactly NULL
+                        // Handle a special case where checking to see if something is exactly NULL
                         $where_clause[] = '`' . mysql_real_escape_string($field_name) . '` IS NULL';
                     }
                     else if (! is_array($values)) {
-                        //  $values is a scalar value
+                        // $values is a scalar value
                         $where_clause[] = '`' . mysql_real_escape_string($field_name) . "` = '" . mysql_real_escape_string($values) . "'";
                     }
                     else if ($clause = get_sql_in_string($values, $field_name)) {
@@ -675,7 +640,6 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         if ($this->dirty_data === true) {
             $this->fetch_data();
         }
-
 
         if ($this->index_array_key_map && $field == $this->primary_key_field_name) {
             if ($this->dirty_index === true)
