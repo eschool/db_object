@@ -2318,7 +2318,7 @@ class db_object {
                 continue;
             }
 
-            $this->log_attribute_change('$attribute', $this->$attribute);
+            $this->log_attribute_change($attribute, $this->$attribute);
         }
     }
 
@@ -2337,7 +2337,7 @@ class db_object {
 
         $constraints = array('table'          => $historical_object->table_name,
                              'record_id'      => $historical_object->get_id(),
-                             'inserted_on <=' => $date
+                             'inserted_on <=' => date('Y-m-d H:i:s', strtotime($date))
         );
 
         $most_recent_metadata = array('inserted_on' => '0000-00-00 00:00:00');
@@ -2347,7 +2347,6 @@ class db_object {
         $add_was_logged = (bool)db_object::get_single_field_value('db_object_log', 'id', $constraints);
 
         foreach (array_keys($historical_object->attributes) as $attribute) {
-
             // Changes to metadata fields are not logged
             if (in_array($attribute, $historical_object->metadata_fields)) {
                 continue;
@@ -2356,20 +2355,19 @@ class db_object {
             $constraints['attribute'] = $attribute;
             $changes_to_attribute = new db_recordset('db_object_log', $constraints, false, array('inserted_on' => 'DESC'));
 
-            if (empty($changes_to_attribute)) {
-
-                // If there is not a change record for an attribute and its add was not logged, it is not guaranteed that
-                // there is enough information to recreate this object as it was on the given date
+            if (count($changes_to_attribute) === 0) {
                 if ($add_was_logged === false) {
+                    // If there is not a change record for an attribute and the add of this record was not logged
+                    // it is not guaranteed that there is enough information to recreate this object as it was on the given date
                     return false;
                 }
-
-                // There is no change recorded for this attribute, therefore the value on the current record is accurate
-                continue;
+                else {
+                    // There is no change recorded for this attribute, therefore the value on the current record is accurate
+                    continue;
+                }
             }
 
-            // $change_nearest_to_requested_date = $changes_to_attribute->current();
-            $change_nearest_to_requested_date = first($changes_to_attribute);
+            $change_nearest_to_requested_date = $changes_to_attribute->current();
             $historical_object->set_attribute($attribute, $change_nearest_to_requested_date->value, false);
 
             // Keep track of the most recent inserted metadata from all the change records used to restore this object
