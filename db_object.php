@@ -2335,27 +2335,18 @@ class db_object {
 
         $historical_object = clone $this;
 
-        $constraints = array('table'          => $historical_object->table_name,
-                             'record_id'      => $historical_object->get_id(),
-                             'inserted_on <=' => date('Y-m-d H:i:s', strtotime($date))
-        );
+        // If there is a change log for the primary key of this record, its creation was logged
+        $add_was_logged = $this->get_most_recent_attribute_log_before_date($this->primary_key_field, time());
 
         $most_recent_metadata = array('inserted_on' => '0000-00-00 00:00:00');
-
-        // If there is a change log for the primary key of this record, its creation was logged
-        $constraints['attribute'] = $this->primary_key_field;
-        $add_was_logged = (bool)db_object::get_single_field_value('db_object_log', 'id', $constraints);
-
         foreach (array_keys($historical_object->attributes) as $attribute) {
+
             // Changes to metadata fields are not logged
             if (in_array($attribute, $historical_object->metadata_fields)) {
                 continue;
             }
 
-            $constraints['attribute'] = $attribute;
-            $changes_to_attribute = new db_recordset('db_object_log', $constraints, false, array('inserted_on' => 'DESC'));
-
-            if (count($changes_to_attribute) === 0) {
+            if (!$change_nearest_to_requested_date = $this->get_most_recent_attribute_log_before_date($attribute, $date)) {
                 if ($add_was_logged === false) {
                     // If there is not a change record for an attribute and the add of this record was not logged
                     // it is not guaranteed that there is enough information to recreate this object as it was on the given date
@@ -2367,7 +2358,6 @@ class db_object {
                 }
             }
 
-            $change_nearest_to_requested_date = $changes_to_attribute->current();
             $historical_object->set_attribute($attribute, $change_nearest_to_requested_date->value, false);
 
             // Keep track of the most recent inserted metadata from all the change records used to restore this object
@@ -2392,5 +2382,34 @@ class db_object {
         return $historical_object;
     }
 
-    // TODO: break out some of the logic above so you can request just one historical attribute
+    private function get_most_recent_attribute_log_before_date($attribute, $date) {
+
+        // Changes to metadata fields are not logged
+        if (in_array($attribute, $this->metadata_fields)) {
+            return false;
+        }
+
+        $constraints = array('table'          => $this->table_name,
+                             'record_id'      => $this->get_id(),
+                             'inserted_on <=' => date('Y-m-d H:i:s', strtotime($date)),
+                             'attribute'      => $attribute
+        );
+
+        $changes_to_attribute = new db_recordset('db_object_log', $constraints, false, array('inserted_on' => 'DESC'));
+        if (count($changes_to_attribute) === 0) {
+            return false;
+        }
+        else {
+            return $changes_to_attribute->current();
+        }
+    }
+
+    public function get_attribute_on_date($attribute, $date) {
+        if ($change_nearest_to_requested_date = $this->get_most_recent_attribute_log_before_date($attribute, $date)) {
+            return $change_nearest_to_requested_date->value;
+        }
+
+        // TODO: what should the failure case *actually* do?
+        return false;
+    }
 }
