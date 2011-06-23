@@ -109,6 +109,9 @@ class db_object {
 
    public $logging_enabled;
 
+   // Set upon first determing the log date of this object. Used to cache this value for multiple calls.
+   protected $first_logged_date;
+
     /**
      *
      * @param integer $id
@@ -2322,18 +2325,23 @@ class db_object {
         }
     }
 
-    public function get_first_log_date() {
-        if (!$primary_key_log = $this->get_most_recent_attribute_log_before_date($this->primary_key_field, time())) {
+    public function get_first_logged_date() {
+        // Cache this value as it is used many times when restoring an object
+        if (isset($this->first_logged_date)) {
+            return $this->first_logged_date;
+        }
+
+        if (!$primary_key_log = $this->get_most_recent_attribute_log_before_date($this->primary_key_field, date('Y-m-d H:i:s'))) {
             return false;
         }
 
+        $this->first_logged_date = $primary_key_log->changed_on;
         return $primary_key_log->changed_on;
     }
 
     private function log_attribute_change($attribute, $value, $action) {
-
         // If this record has never been logged, log its primary key. This establishes a baseline for changes to log against
-        if ($attribute != $this->primary_key_field && !$this->get_first_log_date() && $action !== 'add') {
+        if (($attribute != $this->primary_key_field) && !$this->get_first_logged_date() && $action !== 'add') {
             $this->log_attribute_change($this->primary_key_field, $this->get_id(), 'update');
         }
 
@@ -2379,9 +2387,6 @@ class db_object {
 
         $historical_object = clone $this;
 
-        // If there is a change log for the primary key of this record, its creation was logged
-        $add_was_logged = (bool)$this->get_first_log_date();
-
         $most_recent_metadata = array('changed_on' => '0000-00-00 00:00:00');
         foreach (array_keys($historical_object->attributes) as $attribute) {
 
@@ -2390,26 +2395,14 @@ class db_object {
                 continue;
             }
 
-            if (!$change_nearest_to_requested_date = $this->get_most_recent_attribute_log_before_date($attribute, $date)) {
-                if ($add_was_logged === false) {
-                    // If there is not a change record for an attribute and the add of this record was not logged
-                    // it is not guaranteed that there is enough information to recreate this object as it was on the given date
-                    // TODO: throw an expection here instead of returning false
-                    return false;
-                }
-                else {
-                    // There is no change recorded for this attribute, therefore the value on the current record is accurate
-                    continue;
-                }
-            }
-
+            $change_nearest_to_requested_date = $this->get_most_recent_attribute_log_before_date($attribute, $date);
             $historical_object->set_attribute($attribute, $change_nearest_to_requested_date->value, false);
 
             // Keep track of the most recent inserted metadata from all the change records used to restore this object
-            if ($change_nearest_to_requested_date->inserted_on > $most_recent_metadata['changed_on']) {
-                $most_recent_metadata['changed_on'] = $change_nearest_to_requested_date->inserted_on;
-                $most_recent_metadata['changed_by'] = $change_nearest_to_requested_date->inserted_by;
-                $most_recent_metadata['changed_ip'] = $change_nearest_to_requested_date->inserted_ip;
+            if ($change_nearest_to_requested_date->changed_on > $most_recent_metadata['changed_on']) {
+                $most_recent_metadata['changed_on'] = $change_nearest_to_requested_date->changed_on;
+                $most_recent_metadata['changed_by'] = $change_nearest_to_requested_date->changed_by;
+                $most_recent_metadata['changed_ip'] = $change_nearest_to_requested_date->changed_ip;
             }
         }
 
@@ -2435,13 +2428,20 @@ class db_object {
             return false;
         }
 
+        $formatted_date = date('Y-m-d H:i:s', strtotime($date));
+
+        if ($attribute != $this->primary_key_field && $this->get_first_logged_date() > $formatted_date) {
+            throw new HistoricalDbObjectException('History for this object\'s "' . $attribute . '" field does not extend back to ' . $date);
+        }
+
         $constraints = array('table'          => $this->table_name,
                              'record_id'      => $this->get_id(),
-                             'inserted_on <=' => date('Y-m-d H:i:s', strtotime($date)),
+                             'changed_on <=' => $formatted_date,
                              'attribute'      => $attribute
         );
 
         $changes_to_attribute = new db_recordset('db_object_log', $constraints, false, array('changed_on' => 'DESC', 'id' => 'DESC'));
+
         if (count($changes_to_attribute) === 0) {
             return false;
         }
@@ -2454,8 +2454,15 @@ class db_object {
         if ($change_nearest_to_requested_date = $this->get_most_recent_attribute_log_before_date($attribute, $date)) {
             return $change_nearest_to_requested_date->value;
         }
+        else {
+            // No change log was found for this attribute, so the current value is accurate
+            return $this->$attribute;
+        }
+    }
+}
 
-        // TODO: throw an expection here instead of returning false
-        return false;
+class HistoricalDbObjectException extends Exception {
+    public function __construct($message) {
+        parent::__construct($message);
     }
 }
