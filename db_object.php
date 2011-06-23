@@ -2322,7 +2322,21 @@ class db_object {
         }
     }
 
+    public function get_first_log_date() {
+        if (!$primary_key_log = $this->get_most_recent_attribute_log_before_date($this->primary_key_field, time())) {
+            return false;
+        }
+
+        return $primary_key_log->changed_on;
+    }
+
     private function log_attribute_change($attribute, $value, $action) {
+
+        // If this record has never been logged, log its primary key. This establishes a baseline for changes to log against
+        if ($attribute != $this->primary_key_field && !$this->get_first_log_date() && $action !== 'add') {
+            $this->log_attribute_change($this->primary_key_field, $this->get_id(), 'update');
+        }
+
         switch ($action) {
             case 'add':
                 $meta_prefix = 'inserted';
@@ -2366,7 +2380,7 @@ class db_object {
         $historical_object = clone $this;
 
         // If there is a change log for the primary key of this record, its creation was logged
-        $add_was_logged = $this->get_most_recent_attribute_log_before_date($this->primary_key_field, time());
+        $add_was_logged = (bool)$this->get_first_log_date();
 
         $most_recent_metadata = array('changed_on' => '0000-00-00 00:00:00');
         foreach (array_keys($historical_object->attributes) as $attribute) {
@@ -2380,6 +2394,7 @@ class db_object {
                 if ($add_was_logged === false) {
                     // If there is not a change record for an attribute and the add of this record was not logged
                     // it is not guaranteed that there is enough information to recreate this object as it was on the given date
+                    // TODO: throw an expection here instead of returning false
                     return false;
                 }
                 else {
@@ -2440,7 +2455,7 @@ class db_object {
             return $change_nearest_to_requested_date->value;
         }
 
-        // TODO: what should the failure case *actually* do?
+        // TODO: throw an expection here instead of returning false
         return false;
     }
 }
