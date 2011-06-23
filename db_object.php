@@ -2406,8 +2406,14 @@ class db_object {
             }
         }
 
-        // Use the most recent inserted metadata from the change records as the updated metadata of the historical db_object
-        // TODO: do not replace updated metadata if we restore back to the add state
+        // If we have restored back to the initial inserted_on date, nullify the updated metadata
+        if ($most_recent_metadata['changed_on'] === $this->inserted_on) {
+            foreach ($most_recent_metadata as &$metadata) {
+                $metadata = null;
+            }
+        }
+
+        // Use the most recent changed information from the change records as the updated metadata of the historical db_object
         if ($historical_object->is_acceptable_attribute('updated_on')) {
             $historical_object->set_attribute('updated_on', $most_recent_metadata['changed_on'], false);
         }
