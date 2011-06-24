@@ -110,6 +110,21 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
        ) ENGINE=InnoDB";
         db_object::query($sql);
 
+        $sql = 'CREATE TABLE `db_object_log` (
+              `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+              `table` varchar(100) NOT NULL,
+              `record_id` int(10) unsigned NOT NULL,
+              `attribute` varchar(100) NOT NULL,
+              `value` text NOT NULL,
+              `changed_on` datetime NOT NULL,
+              `changed_by` int(10) unsigned NOT NULL,
+              `changed_ip` varchar(15) NOT NULL,
+              PRIMARY KEY (`id`),
+              KEY `table` (`table`),
+              KEY `record_id` (`record_id`)
+            )';
+        db_object::query($sql);
+
         db_object::query('START TRANSACTION');
 
         $sql = "INSERT INTO `farm` VALUES (1, 'eSchool Farms', 0, '0000-00-00 00:00:00', 0, '0000-00-00 00:00:00', 0)";
@@ -148,6 +163,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         db_object::query("DROP TABLE `barn`");
         db_object::query("DROP TABLE `animals`");
         db_object::query("DROP TABLE `bandit`");
+        db_object::query("DROP TABLE `db_object_log`");
     }
 
     /**
@@ -1250,7 +1266,82 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('2011-05-21', $bandit->birthday);
         $this->assertEquals('no', $bandit->dangerous);
     }
+
+    public function testGetAttributeOnDate() {
+
+    }
+
+    public function testGetObjectRestoredToDate() {
+
+    }
+
+    public function testGetFirstLoggedDate() {
+        // Logging is not enabled for the farm class
+        $farm = new farm;
+        $this->assertFalse($farm->get_first_logged_date());
+
+        // Logging is enabled for the bandit class
+        $swiper = new bandit;
+        $this->assertFalse($swiper->get_first_logged_date());
+
+        $swiper->name = 'Swiper';
+        $swiper->add();
+        $this->assertEquals($swiper->inserted_on, $swiper->get_first_logged_date());
+
+        $swiper->dangerous = 'no';
+        $this->assertEquals($swiper->inserted_on, $swiper->get_first_logged_date());
+
+        // Do not use the class in order to simulate a record existing before logging was enabled for the class
+        $bandit = new db_object('bandit');
+        $bandit->name = 'John';
+        $bandit->add();
+
+        $this->assertFalse($bandit->get_first_logged_date());
+
+        // Get this same object with the actual class
+        $dillinger = new bandit($bandit->get_id());
+        $dillinger->birthday = '1903-06-22';
+
+        // The first logged date should be set to the update done to the object of the bandit class
+        $this->assertEquals($dillinger->updated_on, $dillinger->get_first_logged_date());
+    }
+
+    public function testLogAttributeChange() {
+        // soft delete
+        $bonnie = new bandit();
+        $bonnie->name = 'Bonnie';
+        $bonnie->add();
+
+        $bonnie->delete();
+
+         $log = db_object::find( array('table' => 'bandit', 'attribute' => 'deleted', 'record_id' => $bonnie->get_id()), 'db_object_log');
+         $this->assertNotEquals(false, $log);
+         $this->asssert
+
+        // undelete
+    }
+
+    public function testLogChanges() {
+        // Add
+
+        // Update
+    }
 }
+
+        $sql = "CREATE TABLE `bandit` (
+            `bandit_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+            `name` VARCHAR(255) NOT NULL ,
+            `farms_plundered` INT(11) NOT NULL DEFAULT '0',
+            `money_stolen` FLOAT DEFAULT '0' ,
+            `dangerous` ENUM('yes', 'no', 'maybe so', 'enum()') NOT NULL DEFAULT 'yes',
+            `birthday` DATE,
+            `email` VARCHAR(255) ,
+            `inserted_by` INT NOT NULL ,
+            `inserted_on` DATETIME NOT NULL ,
+            `updated_by` INT NOT NULL ,
+            `updated_on` DATETIME NOT NULL,
+            `deleted` TINYINT(1) NULL DEFAULT '0'
+       ) ENGINE=InnoDB";
 
 class farm extends db_object
 {
@@ -1281,6 +1372,13 @@ class animal extends db_object
         parent::__construct('animals', $id, $table_info, $attributes);
 
         $this->belongs_to('barn', 'barn');
+    }
+}
+
+class bandit extends db_object {
+    function __construct($id=NULL, $table_info = NULL, $attributes = NULL) {
+        parent::__construct('bandit', $id, $table_info, $attributes);
+        $this->logging_enabled = true;
     }
 }
 

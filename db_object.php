@@ -1113,31 +1113,43 @@ class db_object {
      * @author Bryce Thornton
      * @return bool
      */
-    public function find($columns)
+    public function find($columns, $table='')
     {
+        if (!(isset($this) && get_class($this) == __CLASS__)) {
+            // Static context
+            if (empty($table)) {
+                return false;
+            }
+            $object = new db_object($table);
+        }
+        else {
+            // Non-static context
+            $object = $this;
+        }
+
         // We can only do this on null instantiated objects
-        if (!$this->null_instantiated) {
+        if (!$object->null_instantiated) {
             throw new Exception("The method: 'find' cannot be called on an existing object, it must be null instantiated.");
         }
 
         foreach ($columns as $field_name => $field_value) {
             // Make sure it's a legit attribute
-            if (!$this->is_acceptable_attribute($field_name)) {
+            if (!$object->is_acceptable_attribute($field_name)) {
                 throw new Exception("The method: 'find' tries to find by a non-existent attribute: '$field_name'.");
             }
         }
 
         // Try to find the record
-        $found_id = $this->get_single_field_value($this->table_name, $this->primary_key_field, $columns);
+        $found_id = $object->get_single_field_value($object->table_name, $object->primary_key_field, $columns);
 
         if ($found_id) {
             // If this is an extended object, then we pass the id.
-            if (is_subclass_of($this, 'db_object')) {
-                $this->__construct($found_id);
+            if (is_subclass_of($object, 'db_object')) {
+                $object->__construct($found_id);
                 return true;
             }
             else {
-                $this->__construct($this->table_name, $found_id, $this->table_info);
+                $object->__construct($object->table_name, $found_id, $object->table_info);
                 return true;
             }
         }
