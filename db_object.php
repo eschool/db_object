@@ -2306,6 +2306,8 @@ class db_object {
     public static function get_single_field_value($table_name, $field_name, $constraints) {
         $recordset = new db_recordset($table_name, $constraints, false, null, null, true);
         if (count($recordset) === 0) {
+            // TODO: returning false here is not entirely accurate.
+            // When requesting a boolean field, returning false would be ambiguous
             return false;
         }
         foreach ($recordset as $record) {
@@ -2313,7 +2315,19 @@ class db_object {
         }
     }
 
+    ########################################################################################################################
+    # Log functions
+    ########################################################################################################################
+
+    /**
+     * Logs the changes made to an object
+     *
+     * @param string $action
+     * @author John Colvin <john.colvin@eschoolconsultants.com>
+     */
     private function log_changes($action) {
+
+        // Log a change for each attribute that has been modified
         foreach (array_keys($this->modified_attributes) as $attribute) {
 
             // Do not log changes to metadata fields
@@ -2325,6 +2339,13 @@ class db_object {
         }
     }
 
+    /**
+     * Returns the date that this object was first logged.
+     * The object cannot be restored to a date prior to this date
+     * Returns false if this object has never been logged
+     *
+     * @author John Colvin <john.colvin@eschoolconsultants.com>
+     */
     public function get_first_logged_date() {
         // Cache this value as it is used many times when restoring an object
         if (isset($this->first_logged_date)) {
@@ -2339,8 +2360,19 @@ class db_object {
         return $primary_key_log->changed_on;
     }
 
+    /**
+     * Logs the change of one attribute
+     *
+     * @param string $attribute
+     * @param mixed $value
+     * @param string $action
+     * @author John Colvin <john.colvin@eschoolconsultants.com>
+     */
     private function log_attribute_change($attribute, $value, $action) {
-        // If this record has never been logged, log its primary key. This establishes a baseline for changes to log against
+        // If this record has never been logged, log its primary key. This establishes a baseline for changes to log against.
+        // This will only happen for records that existed before logging was enabled for this table.
+        // Make sure we're not logging the primary key field (otherwise this would result in an infinite loop)
+        // Check if it's never been logged and verify this is not an add. Adds will log the primary key automatically.
         if (($attribute != $this->primary_key_field) && !$this->get_first_logged_date() && $action !== 'add') {
             $this->log_attribute_change($this->primary_key_field, $this->get_id(), 'update');
         }
@@ -2383,14 +2415,30 @@ class db_object {
         return $log->add();
     }
 
+    /**
+     * Returns true if the object is identical to its state on the given date.
+     * Returns false otherwise.
+     *
+     * @param string $date
+     * @author John Colvin <john.colvin@eschoolconsultants.com>
+     */
     private function restore_date_indicates_current_object($date) {
+        // If the date is after the last time that this object was updated, then its current state is the same as the state at that time
         return $this->is_acceptable_attribute('updated_on') && date('Y-m-d H:i:s', strtotime($date) >= $this->updated_on);
     }
 
+    /**
+     * Returns this object as it would have been on that date given.
+     * Throws a HistoricalDbObjectException if it's not possible to do so.
+     *
+     * @param string $date
+     * @author John Colvin
+     */
     public function get_object_restored_to_date($date) {
 
         $historical_object = clone $this;
 
+        // If this object is the same as it was on the requested date, don't bother going through the restore procedure
         if ($this->restore_date_indicates_current_object($date)) {
             return $historical_object;
         }
@@ -2403,6 +2451,7 @@ class db_object {
                 continue;
             }
 
+            // Get the change for this attribute and set it in the historical object WITHOUT saving it back to the DB
             $change_nearest_to_requested_date = $this->get_most_recent_attribute_log_before_date($attribute, $date);
             $historical_object->set_attribute($attribute, $change_nearest_to_requested_date->value, false);
 
@@ -2435,6 +2484,15 @@ class db_object {
         return $historical_object;
     }
 
+    /**
+     * Returns a db_object of the the log that represents a change to the requested change.
+     * The log object is the the most recent change prior to the requested date.
+     * Throws a HistoricalDbObjectException if it's not possible to determine the value of the attribute on that date.
+     *
+     * @param string $attribute
+     * @param string $date
+     * @author John Colvin
+     */
     private function get_most_recent_attribute_log_before_date($attribute, $date) {
 
         // Changes to metadata fields are not logged
@@ -2444,28 +2502,42 @@ class db_object {
 
         $formatted_date = date('Y-m-d H:i:s', strtotime($date));
 
+        // Make sure that this attribute can be restored to the requested date
+        // Do not do this check for the primary key because this method is called in get_first_logged_date
+        // for the primary key and would therefore cause these methods to call each other ad infinitum
         if ($attribute != $this->primary_key_field && $this->get_first_logged_date() > $formatted_date) {
             throw new HistoricalDbObjectException('History for this object\'s "' . $attribute . '" field does not extend back to ' . $date);
         }
 
+        // Get a recordset of all the changes made to this attribute
         $constraints = array('table'          => $this->table_name,
                              'record_id'      => $this->get_id(),
                              'changed_on <=' => $formatted_date,
                              'attribute'      => $attribute
         );
-
         $changes_to_attribute = new db_recordset('db_object_log', $constraints, false, array('changed_on' => 'DESC', 'id' => 'DESC'));
 
         if (count($changes_to_attribute) === 0) {
+            // There are no logged changes made to this attribute
             return false;
         }
         else {
+            // Return the first change. (The most recent because of the ordering of the recordset)
             return $changes_to_attribute->current();
         }
     }
 
+    /**
+     * Returns the value of the requested attribute on the provided date.
+     * Throws a HistoricalDbObjectException if it's not able retrieve a value for that date.
+     *
+     * @param string $attribute
+     * @param string $date
+     * @author John Colvin
+     */
     public function get_attribute_on_date($attribute, $date) {
 
+        // If the current object is the same as it was on the date, return the current attribute value
         if ($this->restore_date_indicates_current_object($date)) {
             return $this->$attribute;
         }
@@ -2478,6 +2550,10 @@ class db_object {
             return $this->$attribute;
         }
     }
+
+    ########################################################################################################################
+    # End of log functions
+    ########################################################################################################################
 }
 
 class HistoricalDbObjectException extends Exception {
