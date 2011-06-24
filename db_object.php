@@ -1108,42 +1108,59 @@ class db_object {
      * The parameter is a key/value array with the key being the field to search for and value is the value.
      * If a record is found this object will be constructed with the record.
      *
+     * When called from a static context table is a required parameter and the method returns the object
+     * matching the given attributes.
+     *
      * @param array $columns
      *
      * @author Bryce Thornton
      * @return bool
      */
-    public function find($columns)
+    public function find($columns, $table='')
     {
+        $static_context = !(isset($this) && get_class($this) == __CLASS__);
+        if ($static_context) {
+            if (empty($table)) {
+                return false;
+            }
+            $object = new db_object($table);
+        }
+        else {
+            $object = $this;
+        }
+
         // We can only do this on null instantiated objects
-        if (!$this->null_instantiated) {
+        if (!$object->null_instantiated) {
             throw new Exception("The method: 'find' cannot be called on an existing object, it must be null instantiated.");
         }
 
         foreach ($columns as $field_name => $field_value) {
             // Make sure it's a legit attribute
-            if (!$this->is_acceptable_attribute($field_name)) {
+            if (!$object->is_acceptable_attribute($field_name)) {
                 throw new Exception("The method: 'find' tries to find by a non-existent attribute: '$field_name'.");
             }
         }
 
         // Try to find the record
-        $found_id = $this->get_single_field_value($this->table_name, $this->primary_key_field, $columns);
+        $found_id = $object->get_single_field_value($object->table_name, $object->primary_key_field, $columns);
 
         if ($found_id) {
             // If this is an extended object, then we pass the id.
-            if (is_subclass_of($this, 'db_object')) {
-                $this->__construct($found_id);
-                return true;
+            if (is_subclass_of($object, 'db_object')) {
+                $object->__construct($found_id);
             }
             else {
-                $this->__construct($this->table_name, $found_id, $this->table_info);
-                return true;
+                $object->__construct($object->table_name, $found_id, $object->table_info);
             }
         }
         else {
             return false;
         }
+
+        if ($static_context) {
+            return $object;
+        }
+        return true;
     }
 
     /*********************************************************************
