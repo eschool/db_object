@@ -1307,41 +1307,33 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testLogAttributeChange() {
-        // soft delete
         $bonnie = new bandit();
         $bonnie->name = 'Bonnie';
         $bonnie->add();
 
+        // soft delete
         $bonnie->delete();
 
-         $log = db_object::find( array('table' => 'bandit', 'attribute' => 'deleted', 'record_id' => $bonnie->get_id()), 'db_object_log');
-         $this->assertNotEquals(false, $log);
-         $this->assertEquals(1, $log->value);
+        $log = db_object::find(array('table' => 'bandit', 'attribute' => 'deleted', 'record_id' => $bonnie->get_id()), 'db_object_log');
+        $this->assertNotEquals(false, $log);
+        $this->assertEquals(1, $log->value);
+        $log->delete(); // A little cheat to make sure the find after this works without ambiguity
 
         // undelete
+        $bonnie->undelete();
+
+        $log = db_object::find(array('table' => 'bandit', 'attribute' => 'deleted', 'record_id' => $bonnie->get_id()), 'db_object_log');
+        $this->assertNotEquals(false, $log);
+        $this->assertTrue(empty($log->value));
     }
 
     public function testLogChanges() {
         // Add
 
+
         // Update
     }
 }
-
-        $sql = "CREATE TABLE `bandit` (
-            `bandit_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-            `name` VARCHAR(255) NOT NULL ,
-            `farms_plundered` INT(11) NOT NULL DEFAULT '0',
-            `money_stolen` FLOAT DEFAULT '0' ,
-            `dangerous` ENUM('yes', 'no', 'maybe so', 'enum()') NOT NULL DEFAULT 'yes',
-            `birthday` DATE,
-            `email` VARCHAR(255) ,
-            `inserted_by` INT NOT NULL ,
-            `inserted_on` DATETIME NOT NULL ,
-            `updated_by` INT NOT NULL ,
-            `updated_on` DATETIME NOT NULL,
-            `deleted` TINYINT(1) NULL DEFAULT '0'
-       ) ENGINE=InnoDB";
 
 class farm extends db_object
 {
