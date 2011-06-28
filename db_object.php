@@ -531,7 +531,9 @@ class db_object {
 
         if ($hard !== true && in_array('deleted', $this->metadata_fields)) {
             if ($return_value = $this->set_attribute('deleted', '1', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false)) {
-                $this->log_attribute_change('deleted', true, 'delete');
+                if ($this->logging_enabled === true) {
+                    $this->log_attribute_change('deleted', true, 'delete');
+                }
             }
 
             // Call the callbacks
@@ -1597,7 +1599,9 @@ class db_object {
                 }
             }
             if ($sd_obj->set_attribute('deleted', '0', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false)) {
-                $this->log_attribute_change('deleted', false, 'undelete');
+                if ($this->logging_enabled === true) {
+                    $this->log_attribute_change('deleted', false, 'undelete');
+                }
             }
 
             // return the correct type of object.
@@ -2347,6 +2351,10 @@ class db_object {
      */
     private function log_changes($action) {
 
+        if ($this->logging_enabled !== true) {
+            return false;
+        }
+
         // Log a change for each attribute that has been modified
         foreach (array_keys($this->modified_attributes) as $attribute) {
 
@@ -2389,6 +2397,11 @@ class db_object {
      * @author John Colvin <john.colvin@eschoolconsultants.com>
      */
     private function log_attribute_change($attribute, $value, $action) {
+
+        if ($this->logging_enabled !== true) {
+            return false;
+        }
+
         // If this record has never been logged, log its primary key. This establishes a baseline for changes to log against.
         // This will only happen for records that existed before logging was enabled for this table.
         // Make sure we're not logging the primary key field (otherwise this would result in an infinite loop)
