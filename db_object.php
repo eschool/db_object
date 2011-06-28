@@ -1126,6 +1126,7 @@ class db_object {
             $object = new db_object($table);
         }
         else {
+            // Non-static context
             $object = $this;
         }
 
