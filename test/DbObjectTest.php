@@ -1329,25 +1329,32 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
     public function testLogChanges() {
         // Add
+        $clyde = new bandit();
+        $clyde->name = 'Clyde';
+        $clyde->add();
+
+        $logs = new db_recordset('db_object_log', array('table' => 'bandit', 'record_id' => $clyde->get_id()));
+        $this->assertTrue(count($logs) > 0);
+
+        foreach ($logs as $log) {
+            $attribute = $log->attribute;
+            $this->assertEquals($clyde->$attribute, $log->value);
+        }
 
         // Update
+        $clyde->name = 'Alias';
+        $logs = new db_recordset('db_object_log', array('table' => 'bandit', 'attribute' => 'name', 'record_id' => $clyde->get_id()), true, array('changed_on' => 'DESC', 'id' => 'DESC'));
+        $log = $logs->current();
+        $this->assertNotEquals(false, $log);
+        $this->assertEquals('Alias', $log->value);
+
+        $clyde->farms_plundered = 3;
+        $logs = new db_recordset('db_object_log', array('table' => 'bandit', 'attribute' => 'farms_plundered', 'record_id' => $clyde->get_id()), true, array('changed_on' => 'DESC', 'id' => 'DESC'));
+        $log = $logs->current();
+        $this->assertNotEquals(false, $log);
+        $this->assertEquals(3, $log->value);
     }
 }
-
-        $sql = "CREATE TABLE `bandit` (
-            `bandit_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-            `name` VARCHAR(255) NOT NULL ,
-            `farms_plundered` INT(11) NOT NULL DEFAULT '0',
-            `money_stolen` FLOAT DEFAULT '0' ,
-            `dangerous` ENUM('yes', 'no', 'maybe so', 'enum()') NOT NULL DEFAULT 'yes',
-            `birthday` DATE,
-            `email` VARCHAR(255) ,
-            `inserted_by` INT NOT NULL ,
-            `inserted_on` DATETIME NOT NULL ,
-            `updated_by` INT NOT NULL ,
-            `updated_on` DATETIME NOT NULL,
-            `deleted` TINYINT(1) NULL DEFAULT '0'
-       ) ENGINE=InnoDB";
 
 class farm extends db_object
 {
