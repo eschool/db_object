@@ -1542,25 +1542,28 @@ class db_object {
      * @return mixed false or the ID of the soft-deleted entry.
      */
     public function has_soft_deleted_entry() {
-        if (in_array('deleted', $this->metadata_fields)) {
-            $wheres = array();
-            foreach ($this->attributes as $attribute => $value) {
-                if (!in_array($attribute, $this->metadata_fields) && $attribute != 'id') {
-                    $wheres[] = "`$attribute` = '$value'";
-                }
-            }
-            $where = implode(' AND ', $wheres);
-            $sql = 'SELECT * FROM `' . $this->table_name . '` WHERE ' . $where  . ' AND `deleted` = true';
-            if ($entry = $this->query($sql)) {
-                //@todo should this return the first matching record's id??  The oldest??  The most recent??
-                if (is_array($entry[0])) {
-                    return $entry[0]['id'];
-                }
-                else {
-                    return $entry['id'];
-                }
-            }
+
+        // Tables without a deleted field cannot have soft deleted records
+        if (!in_array('deleted', $this->metadata_fields)) {
+            return false;
         }
+
+        // Get all attributes that are not metadata
+        $attributes = $this->get_attributes();
+        foreach ($this->metadata_fields as $field_name) {
+            unset($attributes[$field_name]);
+        }
+
+        // Do not check for the primary key
+        unset($attributes[$this->primary_key_field]);
+
+        // Make sure that the record is actually soft deleted
+        $attributes['deleted'] = true;
+
+        if ($soft_deleted_object = db_object::find($attributes, $this->table_name)) {
+            return $soft_deleted_object->get_id();
+        }
+
         return false;
     }
     /**
@@ -1572,7 +1575,6 @@ class db_object {
     public function undelete() {
         if ($sd_id = $this->has_soft_deleted_entry()) {
             $sd_obj = new db_object($this->table_name, $sd_id);
-
             $related_tables = $this->get_db_relationship_tables();
             foreach ($related_tables as $related_table) {
                 $relationship_type = $this->get_db_relationship_type($related_table);
