@@ -197,11 +197,14 @@ class db_object {
 
             // Set default values
             foreach ($this->table_info as $row) {
-                if (is_null($row['Default'])) {
+                if (is_null($row['Default']) && $row['Null'] == 'YES') {
+                    // Only set a field to null if the default is null and the field is allowed to be null
                     $this->set_attribute($row['Field'], NULL, false, false, false);
                 }
                 else {
-                    $this->set_attribute($row['Field'], $row['Default'], false, false, false);
+                    // If the default is null, use empty string. Otherwise, use the actual default
+                    $default = is_null($row['Default']) ? '' : $row['Default'];
+                    $this->set_attribute($row['Field'], $default, false, false, false);
                 }
             }
 
