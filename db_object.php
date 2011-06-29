@@ -1122,7 +1122,15 @@ class db_object {
      * @return bool
      */
     public static function find($columns, $table='') {
-        $object = new db_object($table);
+
+        $table = (!empty($table)) ? $table : get_called_class();
+
+        if (class_exists($table)) {
+            $object = new $table;
+        }
+        else {
+            $object = new db_object($table);
+        }
 
         // We can only do this on null instantiated objects
         if (!$object->null_instantiated) {
@@ -1429,9 +1437,12 @@ class db_object {
     public static function __callStatic($method, $arguments) {
         // Allow for the "find_by_attribute" method.
         if (substr($method, 0, 7) == 'find_by') {
+
+            $table_name = (isset($arguments[1])) ? $arguments[1] : get_called_class();
+
             // Should be after the "find_by_"
             $field_to_find_by = substr($method, 8);
-            return db_object::find(array($field_to_find_by => $arguments[0]), $arguments[1]);
+            return db_object::find(array($field_to_find_by => $arguments[0]), $table_name);
         }
 
         throw new Exception("The method: '$method' does not exist in db_object.");

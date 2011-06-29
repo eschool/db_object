@@ -884,6 +884,12 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, $animal->get_id());
     }
 
+    function testExtendedFind() {
+        $farm = farm::find(array('name' => 'eSchool Farms'));
+        $this->assertEquals('farm', get_class($farm));
+        $this->assertEquals(1, $farm->get_id());
+    }
+
     function testFindOnAnExistingObject() {
         $animal = new db_object('animals', 1);
 
@@ -918,6 +924,18 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // Find a goat by the farm id
         $animal = db_object::find_by_farm_id(2, 'animals');
         $this->assertEquals(3, $animal->get_id());
+    }
+
+    function testExtendedFindBy()
+    {
+        $farm = farm::find_by_name('eSchool Farms');
+        $this->assertEquals('farm', get_class($farm));
+        $this->assertEquals(1, $farm->get_id());
+
+        // Find a goat by the farm id
+        $farm = farm::find_by_id(1);
+        $this->assertEquals('farm', get_class($farm));
+        $this->assertEquals('eSchool Farms', $farm->name);
     }
 
     /**
