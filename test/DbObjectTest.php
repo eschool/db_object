@@ -880,34 +880,22 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
     function testFindWhenUsedNormally()
     {
-        $animal = new db_object('animals');
-        $this->assertFalse($animal->get_id());
-
-        $animal->find(array('name' => 'Cow'));
+        $animal = db_object::find(array('name' => 'Cow'), 'animals');
         $this->assertEquals(2, $animal->get_id());
     }
 
-    function testFindOnAnExistingObject()
-    {
+    function testFindOnAnExistingObject() {
         $animal = new db_object('animals', 1);
 
-        // Find should throw an exception when called on an instantiated object
-        try {
-            $animal->find(array('name' => 'Cow'));
-            $this->fail(); // Fail if the above line doesn't throw an exception
-        }
-        catch (Exception $e) {
-            $this->assertType('Exception', $e);
-        }
+        $new_animal = $animal->find(array('name' => 'Cow'), $animal->table_name);
+        $this->assertEquals(2, $new_animal->get_id());
     }
 
     function testFindWithABadAttribute()
     {
-        $animal = new db_object('animals');
-
         // Find should throw an exception when called an incorrect attribute
         try {
-            $animal->find(array('type' => 'Cow'));
+            db_object::find(array('type' => 'Cow'), 'animals');
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
@@ -917,22 +905,18 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
 
     function testFindWithNonUniqueAttributes()
     {
-        $animal = new db_object('animals');
-
         // Find just returns the first found record if there is more than one.
-        $animal->find(array('barn' => 1));
+        $animal = db_object::find(array('barn' => 1), 'animals');
         $this->assertEquals(1, $animal->get_id());
     }
 
     function testFindWhenUsingTheMagicSyntax()
     {
-        $animal = new db_object('animals');
-        $animal->find_by_name('Cow');
+        $animal = db_object::find_by_name('Cow', 'animals');
         $this->assertEquals(2, $animal->get_id());
 
         // Find a goat by the farm id
-        $animal = new db_object('animals');
-        $animal->find_by_farm_id(2);
+        $animal = db_object::find_by_farm_id(2, 'animals');
         $this->assertEquals(3, $animal->get_id());
     }
 

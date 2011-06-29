@@ -1121,19 +1121,8 @@ class db_object {
      * @author Bryce Thornton
      * @return bool
      */
-    public function find($columns, $table='')
-    {
-        $static_context = !(isset($this) && get_class($this) == __CLASS__);
-        if ($static_context) {
-            if (empty($table)) {
-                return false;
-            }
-            $object = new db_object($table);
-        }
-        else {
-            // Non-static context
-            $object = $this;
-        }
+    public static function find($columns, $table='') {
+        $object = new db_object($table);
 
         // We can only do this on null instantiated objects
         if (!$object->null_instantiated) {
@@ -1163,10 +1152,7 @@ class db_object {
             return false;
         }
 
-        if ($static_context) {
-            return $object;
-        }
-        return true;
+        return $object;
     }
 
     /*********************************************************************
@@ -1404,13 +1390,7 @@ class db_object {
         // Figure out if the method name refers to a related table.
         $related_tables = $this->get_db_relationship_tables();
 
-        // First, allow for the "find_by_attribute" method.
-        if (substr($method, 0, 7) == 'find_by') {
-            // Should be after the "find_by_"
-            $field_to_find_by = substr($method, 8);
-            return $this->find(array($field_to_find_by => $arguments[0]));
-        }
-        elseif (in_array($method, $related_tables)) {
+        if (in_array($method, $related_tables)) {
             // Grab the arguments.  In this case $arguments[0] is $constraints
             if (isset($arguments[0]) && ! empty($arguments[0]))
                 $constraints = $arguments[0];
@@ -1444,6 +1424,17 @@ class db_object {
         else {
             throw new Exception("The method: '$method' does not exist in db_object.");
         }
+    }
+
+    public static function __callStatic($method, $arguments) {
+        // Allow for the "find_by_attribute" method.
+        if (substr($method, 0, 7) == 'find_by') {
+            // Should be after the "find_by_"
+            $field_to_find_by = substr($method, 8);
+            return db_object::find(array($field_to_find_by => $arguments[0]), $arguments[1]);
+        }
+
+        throw new Exception("The method: '$method' does not exist in db_object.");
     }
 
      /*
