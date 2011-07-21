@@ -2407,12 +2407,18 @@ class db_object {
             return false;
         }
 
-        // If this record has never been logged, log its primary key. This establishes a baseline for changes to log against.
+        // If this record has never been logged, log its current values. This establishes a baseline for changes to log against.
         // This will only happen for records that existed before logging was enabled for this table.
         // Make sure we're not logging the primary key field (otherwise this would result in an infinite loop)
         // Check if it's never been logged and verify this is not an add. Adds will log the primary key automatically.
         if (($attribute != $this->primary_key_field) && !$this->get_first_logged_date() && $action !== 'add') {
             $this->log_attribute_change($this->primary_key_field, $this->get_id(), 'update');
+            $non_modified_attributes = array_diff(array_keys($this->get_attributes()), array_keys($this->modified_attributes));
+            unset($non_modified_attributes[$this->primary_key_field]);
+            
+            foreach ($non_modified_attributes as $attribute_to_log) {
+                $this->log_attribute_change($attribute_to_log, $this->$attribute_to_log, 'update');    
+            }
         }
 
         switch ($action) {
@@ -2462,7 +2468,7 @@ class db_object {
      */
     private function restore_date_indicates_current_object($date) {
         // If the date is after the last time that this object was updated, then its current state is the same as the state at that time
-        return $this->is_acceptable_attribute('updated_on') && date('Y-m-d H:i:s', strtotime($date) >= $this->updated_on);
+        return $this->logging_enabled && !$this->null_instantiated && $this->is_acceptable_attribute('updated_on') && !empty($this->updated_on) && date('Y-m-d H:i:s', strtotime($date)) >= $this->updated_on;
     }
 
     /**
@@ -2543,10 +2549,13 @@ class db_object {
         // Make sure that this attribute can be restored to the requested date
         // Do not do this check for the primary key because this method is called in get_first_logged_date
         // for the primary key and would therefore cause these methods to call each other ad infinitum
-        if ($attribute != $this->primary_key_field && $this->get_first_logged_date() > $formatted_date) {
-            throw new HistoricalDbObjectException('History for this object\'s "' . $attribute . '" field does not extend back to ' . $date);
+        if ($attribute != $this->primary_key_field) {
+            $first_logged_date = $this->get_first_logged_date();
+            if (false === $first_logged_date || $first_logged_date > $formatted_date) {
+                throw new HistoricalDbObjectException('History for this object\'s "' . $attribute . '" field does not extend back to ' . $date);
+            }
         }
-
+        
         // Get a recordset of all the changes made to this attribute
         $constraints = array('table'          => $this->table_name,
                              'record_id'      => $this->get_id(),
