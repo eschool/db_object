@@ -1398,7 +1398,50 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testGetObjectRestoredToDate() {
-
+        $bandit = new bandit;
+        $bandit->name = 'Bonnie';
+        $bandit->add();
+        $first_save_time = $bandit->inserted_on;
+        $first_save_attributes = $bandit->get_attributes();
+        
+        $old_bandit = $bandit->get_object_restored_to_date($bandit->inserted_on);
+        $this->assertEquals($bandit->get_attributes(), $old_bandit->get_attributes());
+        
+        try {
+            $bandit->get_object_restored_to_date(date('Y-m-d H:i:s', strtotime('-1 day')));
+            $this->fail('Expected exception when trying to get history for an object before it was logged');
+        } catch (HistoricalDbObjectException $e) {}
+        
+        $old_bandit = $bandit->get_object_restored_to_date(date('Y-m-d', strtotime('+1 day')));
+        $this->assertEquals($bandit->get_attributes(), $old_bandit->get_attributes());
+        
+        sleep(1);
+        $bandit->name = 'Swiper';
+        $bandit->farms_plundered = 10;
+        $second_save_time = $bandit->updated_on;
+        $second_save_attributes = $bandit->get_attributes();
+        
+        $old_bandit = $bandit->get_object_restored_to_date($second_save_time);
+        $this->assertEquals($bandit->get_attributes(), $old_bandit->get_attributes());
+        
+        $old_bandit = $bandit->get_object_restored_to_date($first_save_time);
+        $this->assertEquals($first_save_attributes, $old_bandit->get_attributes());
+        
+        sleep(1);
+        $bandit->name = 'Clyde';
+        $bandit->farms_plundered = 20;
+        $bandit->money_stolen = 2.13;
+        $third_save_time = $bandit->updated_on;
+        $third_save_attributes = $bandit->get_attributes();
+        
+        $old_bandit = $bandit->get_object_restored_to_date($third_save_time);
+        $this->assertEquals($bandit->get_attributes(), $old_bandit->get_attributes());
+        
+        $old_bandit = $bandit->get_object_restored_to_date($second_save_time);
+        $this->assertEquals($second_save_attributes, $old_bandit->get_attributes());
+        
+        $old_bandit = $bandit->get_object_restored_to_date($first_save_time);
+        $this->assertEquals($first_save_attributes, $old_bandit->get_attributes());
     }
 
     public function testGetFirstLoggedDate() {
