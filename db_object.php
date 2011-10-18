@@ -348,12 +348,12 @@ class db_object {
                     $this->log_changes('add');
                 }
 
-                // Unset status variables
-                $this->modified_attributes = array();
-
                 // Call the callbacks
                 $this->execute_callbacks('after_add');
                 $this->execute_callbacks('after_save');
+
+                // Unset status variables
+                $this->modified_attributes = array();
 
                 return true;
             }
@@ -470,11 +470,11 @@ class db_object {
                     $this->log_changes('update');
                 }
 
-                $this->modified_attributes = array();
-
                 // Call the callbacks
                 $this->execute_callbacks('after_update');
                 $this->execute_callbacks('after_save');
+
+                $this->modified_attributes = array();
 
                 return true;
             }
@@ -2415,9 +2415,9 @@ class db_object {
             $this->log_attribute_change($this->primary_key_field, $this->get_id(), 'update');
             $non_modified_attributes = array_diff(array_keys($this->get_attributes()), array_keys($this->modified_attributes));
             unset($non_modified_attributes[$this->primary_key_field]);
-            
+
             foreach ($non_modified_attributes as $attribute_to_log) {
-                $this->log_attribute_change($attribute_to_log, $this->$attribute_to_log, 'update');    
+                $this->log_attribute_change($attribute_to_log, $this->$attribute_to_log, 'update');
             }
         }
 
@@ -2555,7 +2555,7 @@ class db_object {
                 throw new HistoricalDbObjectException('History for this object\'s "' . $attribute . '" field does not extend back to ' . $date);
             }
         }
-        
+
         // Get a recordset of all the changes made to this attribute
         $constraints = array('table'          => $this->table_name,
                              'record_id'      => $this->get_id(),
