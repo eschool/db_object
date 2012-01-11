@@ -38,3 +38,21 @@ foreach ($animals_in_barn_3 as $animal) {
     $animal->barn = 4;
 }
 ```
+
+## Testing
+
+### Installing PHPUnit
+> * Make sure you have installed the latest version of PEAR
+> * Go to PHPUnit's installation instructions page and follow the instructions: http://www.phpunit.de/manual/current/en/installation.html
+> * Make sure that you are in the root of your PHP directory and type "phpunit" to make sure that everything has installed correctly
+
+### Create a New Database
+> * Create a new database within your environment either using your own supplied parameters or by using the ones found in /test/db_object_test_SAMPLE.ini
+> * Copy and rename the db_object_test_SAMPLE.ini file to just db_object_test.ini
+> * Replace the parameter values with the ones you created or leave them as-is if you used the parameters that were supplied.
+
+### Running The Tests
+
+> * Make sure that you are in the root of your PHP directory (EX: C:\xampp\php>)
+> * Go to your command line and type the following: phpunit "path-to-your-directory/db_object/test/name-of-test-file-without-extension"
+> * EX: C:\xampp\php>phpunit "C:/xampp/htdocs/db_object/test/DBRecordsetTest"

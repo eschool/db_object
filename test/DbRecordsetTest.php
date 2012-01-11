@@ -14,7 +14,7 @@
  * or with the .php file in the PHPUnit directory:
  * >> php phpunit.php test/DbRecordsetTest.php
  */
-
+require_once 'PHPUnit/Autoload.php';// Standard include for using PHPUnit
 require_once dirname(__FILE__) . '/../db_object.php';
 
 extract(parse_ini_file('db_object_test.ini'));
@@ -57,7 +57,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
                     PRIMARY KEY (id)
                ) ENGINE=InnoDB');
 
-        db_object::query('START TRANSACTION');
+        //db_object::query('START TRANSACTION');
 
         db_object::query('INSERT INTO `fruits` (id, name, color, season, taste, deleted) VALUES
                     (1, "strawberry", "red", "spring", "yummy", false),
@@ -118,7 +118,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
         }
         catch (Exception $e)
         {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -174,10 +174,10 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     function testInstantiationOfClasses()
     {
         $fruits = new db_recordset('fruits', NULL, TRUE);
-        $this->assertType('fruit', $fruits->first());
+        $this->assertInstanceOf('fruit', $fruits->first());
 
         $objects = new db_recordset('fruits', NULL, FALSE);
-        $this->assertType('db_object', $fruits->first());
+        $this->assertInstanceOf('db_object', $fruits->first());
     }
 
     function testInstantiationWithAlternateKeys()
@@ -239,6 +239,42 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
         $this->recordset->set_recordset_limit(1, 2);
 
         $this->assertSame($this->recordset->get_recordset(), $ids);
+    }
+
+    function testRecordsetLimitParameterNoOffset()
+    {
+        $limit = 3;
+        $rs = new db_recordset('fruits', NULL, TRUE, NULL, NULL, FALSE, $limit);
+        $rset = db_object::query(db_object::get_sql('fruits', 'id', '', '', '', 3));
+
+        $ids = array();
+
+        foreach ($rset as $row)
+        {
+            $ids[] = $row['id'];
+        }
+
+        $this->recordset->set_recordset_limit(3);
+
+        $this->assertSame($rs->get_recordset(), $ids);
+    }
+
+    function testRecordsetLimitParameterWithOffset()
+    {
+        $limit = array(1,2);
+        $rs = new db_recordset('fruits', NULL, TRUE, NULL, NULL, FALSE, $limit);
+        $rset = db_object::query(db_object::get_sql('fruits', 'id', '`id` > 2', '', '', 1));
+
+        $ids = array();
+
+        foreach ($rset as $row)
+        {
+            $ids[] = $row['id'];
+        }
+
+        $this->recordset->set_recordset_limit(1, 2);
+
+        $this->assertSame($rs->get_recordset(), $ids);
     }
 
     function testTableInfoInstantiatedProperly()
@@ -368,7 +404,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     function testAutoDetectionOfSingularClassNames()
     {
         $rs = new db_recordset('fruits');
-        $this->assertType('fruit', $rs->first());
+        $this->assertInstanceOf('fruit', $rs->first());
     }
 }
 

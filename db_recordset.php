@@ -80,9 +80,10 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      * @param array $sort_order (array('first_name' => 'DESC'))
      * @param string $array_key
      * @param boolen $include_deleted
+     * @param integer/array $limit_results_by (EX: "$limit_results_by = 100" OR "$limit_results_by = array(100, 50)". This will be passed to set_recordset_limit() )
      * @return boolean success or failure
      */
-    public function __construct($table_name=NULL, $constraints=NULL, $autodiscover_class=TRUE, $sort_order=NULL, $array_key_field_name=NULL, $include_deleted=FALSE)
+    public function __construct($table_name=NULL, $constraints=NULL, $autodiscover_class=TRUE, $sort_order=NULL, $array_key_field_name=NULL, $include_deleted=FALSE, $limit_results_by=NULL)
     {
         if (strlen(trim($table_name)) == 0) {
             throw new Exception('Table name cannot be empty');
@@ -104,6 +105,11 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         }
 
         $this->set_sort_order($sort_order);
+
+        if($limit_results_by){
+            $limit_by = $this->limit_ensure_array($limit_results_by);
+            $this->set_recordset_limit($limit_by[0], $limit_by[1]);
+        }
 
         if ($array_key_field_name) {
             $this->array_key_field_name = $array_key_field_name;
@@ -715,5 +721,20 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         }
 
         return $this[$ids[0]];
+    }
+
+    /**
+     * Makes sure that a variable is indeed an array.
+     *
+     * @author David Varney <david.varney@eschoolconsultants.com>
+     *
+     * @param array/string $input This can be an array or a string
+     * @return array $input
+     */
+    protected function limit_ensure_array($input){
+        if(!is_array($input)){
+            $input = array($input, null);
+        }
+        return $input;
     }
 }
