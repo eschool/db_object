@@ -1276,29 +1276,29 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime('-1 day')));
             $this->fail('Expected exception when getting a historical attribute of a null instantiated object');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         try {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s'));
             $this->fail('Expected exception when getting a historical attribute of a null instantiated object');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         try {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime('+1 day')));
             $this->fail('Expected exception when getting a historical attribute of a null instantiated object');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         $bandit->name = 'Swiper';
 
         try {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime('-1 day')));
             $this->fail('Expected exception when getting a historical attribute of a null instantiated object');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         try {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s'));
             $this->fail('Expected exception when getting a historical attribute of a null instantiated object');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         try {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime('+1 day')));
             $this->fail('Expected exception when getting a historical attribute of a null instantiated object');
@@ -1313,7 +1313,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime('-1 day')));
             $this->fail('Expected exception when getting a historical attribute before its logging was started');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         sleep(1);
         $bandit->name = 'Bonnie';
         $second_save_time = time();
@@ -1326,11 +1326,11 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime('-1 day')));
             $this->fail('Expected exception when getting a historical attribute before its logging was started');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         sleep(1);
         $bandit->name = 'Clyde';
         $third_save_time = time();
-        
+
         $this->assertEquals('Clyde', $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s')));
         $this->assertEquals('Clyde', $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime('+1 day'))));
         $this->assertEquals('Clyde', $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime($bandit->updated_on))));
@@ -1341,19 +1341,19 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $bandit->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime('-1 day')));
             $this->fail('Expected exception when getting a historical attribute before its logging was started');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         // Logging is not on for the barn class
         $barn = new barn;
         $barn->name = 'red';
         $barn->farm_id = 13;
         $barn->add();
         $first_save_time = time();
-        
+
         try {
             $barn->get_attribute_on_date('name', date('Y-m-d H:i:s'));
             $this->fail('Expected exception when trying to get history for an object that is not being logged');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         sleep(1);
         $barn->name = 'green';
         $second_save_time = time();
@@ -1365,10 +1365,10 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $barn->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime($barn->updated_on)));
             $this->fail('Expected exception when trying to get history for an object that is not being logged');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         // This is a hack for testing. Don't actually do this in real code.
         $barn->logging_enabled = true;
-        
+
         $this->assertEquals('green', $barn->get_attribute_on_date('name', date('Y-m-d H:i:s')));
         $this->assertEquals('green', $barn->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime($barn->updated_on))));
         $this->assertEquals(13, $barn->get_attribute_on_date('farm_id', date('Y-m-d H:i:s')));
@@ -1381,19 +1381,19 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $barn->get_attribute_on_date('farm_id', date('Y-m-d H:i:s', $barn->inserted_on));
             $this->fail('Expected exception when trying to get history for an object before it was logged');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         sleep(1);
         $barn->name = 'blue';
         $update_time = $barn->updated_on;
-        
+
         sleep(1);
         $barn->farm_id = 14;
-        
+
         $this->assertEquals('blue', $barn->get_attribute_on_date('name', date('Y-m-d H:i:s')));
         $this->assertEquals('blue', $barn->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime($barn->updated_on))));
         $this->assertEquals('blue', $barn->get_attribute_on_date('name', date('Y-m-d H:i:s', strtotime($update_time))));
         $this->assertEquals(14, $barn->get_attribute_on_date('farm_id', date('Y-m-d H:i:s')));
-        $this->assertEquals(14, $barn->get_attribute_on_date('farm_id', date('Y-m-d H:i:s', strtotime($barn->updated_on))));      
+        $this->assertEquals(14, $barn->get_attribute_on_date('farm_id', date('Y-m-d H:i:s', strtotime($barn->updated_on))));
         $this->assertEquals(13, $barn->get_attribute_on_date('farm_id', date('Y-m-d H:i:s', strtotime($update_time))));
     }
 
@@ -1403,43 +1403,43 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $bandit->add();
         $first_save_time = $bandit->inserted_on;
         $first_save_attributes = $bandit->get_attributes();
-        
+
         $old_bandit = $bandit->get_object_restored_to_date($bandit->inserted_on);
         $this->assertEquals($bandit->get_attributes(), $old_bandit->get_attributes());
-        
+
         try {
             $bandit->get_object_restored_to_date(date('Y-m-d H:i:s', strtotime('-1 day')));
             $this->fail('Expected exception when trying to get history for an object before it was logged');
         } catch (HistoricalDbObjectException $e) {}
-        
+
         $old_bandit = $bandit->get_object_restored_to_date(date('Y-m-d', strtotime('+1 day')));
         $this->assertEquals($bandit->get_attributes(), $old_bandit->get_attributes());
-        
+
         sleep(1);
         $bandit->name = 'Swiper';
         $bandit->farms_plundered = 10;
         $second_save_time = $bandit->updated_on;
         $second_save_attributes = $bandit->get_attributes();
-        
+
         $old_bandit = $bandit->get_object_restored_to_date($second_save_time);
         $this->assertEquals($bandit->get_attributes(), $old_bandit->get_attributes());
-        
+
         $old_bandit = $bandit->get_object_restored_to_date($first_save_time);
         $this->assertEquals($first_save_attributes, $old_bandit->get_attributes());
-        
+
         sleep(1);
         $bandit->name = 'Clyde';
         $bandit->farms_plundered = 20;
         $bandit->money_stolen = 2.13;
         $third_save_time = $bandit->updated_on;
         $third_save_attributes = $bandit->get_attributes();
-        
+
         $old_bandit = $bandit->get_object_restored_to_date($third_save_time);
         $this->assertEquals($bandit->get_attributes(), $old_bandit->get_attributes());
-        
+
         $old_bandit = $bandit->get_object_restored_to_date($second_save_time);
         $this->assertEquals($second_save_attributes, $old_bandit->get_attributes());
-        
+
         $old_bandit = $bandit->get_object_restored_to_date($first_save_time);
         $this->assertEquals($first_save_attributes, $old_bandit->get_attributes());
     }

@@ -52,7 +52,11 @@ foreach ($animals_in_barn_3 as $animal) {
 > * Replace the parameter values with the ones you created or leave them as-is if you used the parameters that were supplied.
 
 ### Running The Tests
-
+> * The db_object tests were setup using PHPUnit v3.4 so if you're using 3.6 or newer there will be some PHPUnit methods that are no longer valid such as assertType();
+> * If there is an error when running one of the tests and it says something about not being able to find the "PHPUnit_Framework_TestCase" class just make sure that you include the following line and modify the path if necessary:
+```php
+require_once 'PHPUnit/Autoload.php';
+```
 > * Make sure that you are in the root of your PHP directory (EX: C:\xampp\php>)
 > * Go to your command line and type the following: phpunit "path-to-your-directory/db_object/test/name-of-test-file-without-extension"
 > * EX: C:\xampp\php>phpunit "C:/xampp/htdocs/db_object/test/DBRecordsetTest"

@@ -14,7 +14,7 @@
  * or with the .php file in the PHPUnit directory:
  * >> php phpunit.php test/DbRecordsetTest.php
  */
-require_once 'PHPUnit/Autoload.php';// Standard include for using PHPUnit
+
 require_once dirname(__FILE__) . '/../db_object.php';
 
 extract(parse_ini_file('db_object_test.ini'));
@@ -118,7 +118,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
         }
         catch (Exception $e)
         {
-            $this->assertInstanceOf('Exception', $e);
+            $this->assertType('Exception', $e);
         }
     }
 
@@ -174,10 +174,10 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     function testInstantiationOfClasses()
     {
         $fruits = new db_recordset('fruits', NULL, TRUE);
-        $this->assertInstanceOf('fruit', $fruits->first());
+        $this->assertType('fruit', $fruits->first());
 
         $objects = new db_recordset('fruits', NULL, FALSE);
-        $this->assertInstanceOf('db_object', $fruits->first());
+        $this->assertType('db_object', $fruits->first());
     }
 
     function testInstantiationWithAlternateKeys()
@@ -404,7 +404,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     function testAutoDetectionOfSingularClassNames()
     {
         $rs = new db_recordset('fruits');
-        $this->assertInstanceOf('fruit', $rs->first());
+        $this->assertType('fruit', $rs->first());
     }
 }
 
