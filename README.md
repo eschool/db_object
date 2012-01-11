@@ -47,7 +47,7 @@ foreach ($animals_in_barn_3 as $animal) {
 > * Make sure that you are in the root of your PHP directory and type "phpunit" to make sure that everything has installed correctly
 
 ### Create a New Database
-> * Create a new database within your environment either using your own supplied parameters or by using the ones found in /test/db_object_test_SAMPLE.ini
+> * Create a new database within your environment either using your own supplied parameters or by using the ones found in /test/db_object_test_SAMPLE.ini (make sure to use InnoDB)
 > * Copy and rename the db_object_test_SAMPLE.ini file to just db_object_test.ini
 > * Replace the parameter values with the ones you created or leave them as-is if you used the parameters that were supplied.
 

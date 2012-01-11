@@ -57,7 +57,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
                     PRIMARY KEY (id)
                ) ENGINE=InnoDB');
 
-        //db_object::query('START TRANSACTION');
+        db_object::query('START TRANSACTION');
 
         db_object::query('INSERT INTO `fruits` (id, name, color, season, taste, deleted) VALUES
                     (1, "strawberry", "red", "spring", "yummy", false),
