@@ -1136,7 +1136,15 @@ class db_object {
         if (!$object->null_instantiated) {
             throw new Exception("The method: 'find' cannot be called on an existing object, it must be null instantiated.");
         }
-
+        
+        // Column can either be an array OR it can simply 
+        // be the ID of the object we're looking for...
+        
+        if (!is_array($columns)) {
+            $primary_key = $object->primary_key_field;
+            $columns = array($primary_key => (int)$columns);
+        }
+        
         foreach ($columns as $field_name => $field_value) {
             // Make sure it's a legit attribute
             if (!$object->is_acceptable_attribute($field_name)) {

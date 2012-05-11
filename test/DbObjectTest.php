@@ -883,6 +883,11 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $animal = db_object::find(array('name' => 'Cow'), 'animals');
         $this->assertEquals(2, $animal->get_id());
     }
+    
+    function testFindUsingId() {
+        $farm = farm::find(1);
+        $this->assertEquals(1, $farm->get_id());
+    }
 
     function testExtendedFind() {
         $farm = farm::find(array('name' => 'eSchool Farms'));
