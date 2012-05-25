@@ -130,6 +130,14 @@ class db_object {
         $this->force_no_filtering = false;
         $this->metadata_fields = array();
         $this->metadata_field_override = array();
+        
+        // $id can also be an array of attributes to be used when creating a new record 
+        
+        if (is_array($id)) {
+            $attributes = $id;
+            $this->null_instantiated = true;
+            $id = null;
+        }
 
         if ((isset($table_info) && (is_array($table_info) || $table_info instanceof ArrayAccess) && (sizeof($table_info) > 0))) {
             //  Utilize the dry-instantiated $table_info rather than retrieving it from
@@ -184,8 +192,9 @@ class db_object {
 
         //Activates default filter for ALL fields
         $this->filter_all_attributes('name');
-
+        
         if (is_null($id)) {
+
             //  No value or NULL was passed for the $id
             if ((isset($attributes) && (is_array($attributes) || $attributes instanceof ArrayAccess) && (sizeof($attributes) > 0))) {
                 //  Use the dry-instantiated $attributes value
