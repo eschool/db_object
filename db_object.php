@@ -131,14 +131,6 @@ class db_object {
         $this->metadata_fields = array();
         $this->metadata_field_override = array();
         
-        // $id can also be an array of attributes to be used when creating a new record 
-        
-        if (is_array($id)) {
-            $attributes = $id;
-            $this->null_instantiated = true;
-            $id = null;
-        }
-
         if ((isset($table_info) && (is_array($table_info) || $table_info instanceof ArrayAccess) && (sizeof($table_info) > 0))) {
             //  Utilize the dry-instantiated $table_info rather than retrieving it from
             //  session or the database
@@ -193,6 +185,15 @@ class db_object {
         //Activates default filter for ALL fields
         $this->filter_all_attributes('name');
         
+        // $id can also be an array of attributes to be used when creating a new record 
+
+        $prefilled_attributes = array();
+        
+        if (is_array($id)) {
+            $prefilled_attributes = $id;
+            $id = null;
+        }
+        
         if (is_null($id)) {
 
             //  No value or NULL was passed for the $id
@@ -215,6 +216,10 @@ class db_object {
                     $default = is_null($row['Default']) ? '' : $row['Default'];
                     $this->set_attribute($row['Field'], $default, false, false, false);
                 }
+            }
+            // Now that everything is set up we can set the values we passed in (if any)
+            foreach ($prefilled_attributes as $key => $val) {
+                $this->set_attribute($key, $val);
             }
 
             return true;
@@ -251,6 +256,7 @@ class db_object {
      */
     public function add($force = false)
     {
+
         $sd_id = $this->has_soft_deleted_entry();
         if ($sd_id && !$force) {
             return $this->undelete();
@@ -383,6 +389,7 @@ class db_object {
      */
     public function update($force = false)
     {
+
         if ($this->null_instantiated) {
             throw new Exception('Unable to update a null-instantiated record');
         }
@@ -462,6 +469,7 @@ class db_object {
                     }
                 }
                 else {
+
                     //  Well, what the heck is $columns, then, if it's not a string or array?!
                     throw new Exception('Invalid value/type for columns.  Type must be array or string.');
                 }
@@ -758,6 +766,7 @@ class db_object {
      */
     public function set_attribute($name, $value = NULL, $force_update = true, $check_acceptable_attribute = true, $metadata_override = true)
     {
+
         if ($check_acceptable_attribute) {
             if (!array_key_exists($name, $this->attributes)) {
                 throw new Exception('Attempted to set invalid attribute: "' . $name . '"');
@@ -1145,15 +1154,15 @@ class db_object {
         if (!$object->null_instantiated) {
             throw new Exception("The method: 'find' cannot be called on an existing object, it must be null instantiated.");
         }
-        
-        // Column can either be an array OR it can simply 
+
+        // Column can either be an array OR it can simply
         // be the ID of the object we're looking for...
-        
+
         if (!is_array($columns)) {
             $primary_key = $object->primary_key_field;
             $columns = array($primary_key => (int)$columns);
         }
-        
+
         foreach ($columns as $field_name => $field_value) {
             // Make sure it's a legit attribute
             if (!$object->is_acceptable_attribute($field_name)) {

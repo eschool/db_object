@@ -1533,6 +1533,8 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         $farm = new farm(array('name' => 'El Rancho Gobroko'));
         $this->assertEquals($farm->name, 'El Rancho Gobroko');
         $this->assertTrue($farm->null_instantiated);
+        $this->assertTrue($farm->add());
+        $this->assertFalse($farm->null_instantiated);
     }
     
 }
