@@ -121,11 +121,13 @@ class db_object {
      *
      * @return db_object
      */
-    public function __construct($table_name, $id = NULL, $table_info = NULL, $attributes = NULL)
+    public function __construct($table_name = NULL, $id = NULL, $table_info = NULL, $attributes = NULL)
     {
         $this->modified_attributes = array();
         $this->null_instantiated = false;
-        $this->table_name = $table_name;
+        if (!is_null($table_name)) {
+            $this->table_name = $table_name;
+        }
         $this->attribute_content_types = array();
         $this->force_no_filtering = false;
         $this->metadata_fields = array();
