@@ -80,15 +80,28 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
      *
      */
     function testCollect() {
+        
         $expected = array();
         foreach ($this->recordset as $obj) {
             $expected[$obj->id] = $obj->id;
         }
+        
+        // Plain ol' attribute using anonymous function...        
         $actual = $this->recordset->collect(function($obj) { 
             return $obj->id;
         });
         
         $this->assertSame($actual, $expected);
+
+        // attribute using string        
+        $actual = $this->recordset->collect('id');
+        $this->assertSame($actual, $expected);
+
+        // attribute using method name        
+        $actual = $this->recordset->collect('get_id');
+        $this->assertSame($actual, $expected);
+
+
     }
 
     function testGetFieldValuesMethod()
