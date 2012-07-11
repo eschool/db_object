@@ -498,6 +498,22 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         }
         return $constraints;
     }
+        
+    /**
+     * Builds an array by calling the closure on each object in the recordset 
+     * and collecting the returned value. The array will be index w/ the same
+     * keys as the recordset which created
+     *
+     * @author Kyle Decot <kyle.decot@eschoolconsultants.com>  July 11, 2012
+     *
+     */
+    public function collect(Closure $callback) {
+        $collection = array();
+        foreach ($this as $index => $object) {
+            $collection[$index] = $callback($object); 
+        }
+        return $collection;
+    }
 
     /*******************************************
      * ArrayAccess interface methods

@@ -73,6 +73,24 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
         db_object::query("DROP TABLE `fruits`");
     }
 
+    /**
+     *
+     *
+     * @author Kyle Decot <kyle.decot@eschoolconsultants.com>  July 11, 2012
+     *
+     */
+    function testCollect() {
+        $expected = array();
+        foreach ($this->recordset as $obj) {
+            $expected[$obj->id] = $obj->id;
+        }
+        $actual = $this->recordset->collect(function($obj) { 
+            return $obj->id;
+        });
+        
+        $this->assertSame($actual, $expected);
+    }
+
     function testGetFieldValuesMethod()
     {
         $rset = db_object::query(db_object::get_sql('fruits', 'name'));
