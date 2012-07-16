@@ -250,7 +250,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -261,7 +261,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -286,7 +286,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -332,7 +332,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch(Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -372,7 +372,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch(Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -387,7 +387,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch(Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
 
         // Forcing a delete should be allowed
@@ -399,7 +399,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch(Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -598,7 +598,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch(Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -666,7 +666,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // Make sure it works in this case
         $barn = new barn(1);
         $parent = $barn->get_parent_object('farm_id');
-        $this->assertType('farm', $parent);
+        $this->assertInstanceOf('farm', $parent);
 
         // Make sure it returned the correct record
         $this->assertEquals(1, $parent->get_id());
@@ -677,7 +677,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // Make sure it works when passing the parent table name
         $animal = new db_object('animals', 1);
         $parent = $animal->get_parent_object('barn', 'barn');
-        $this->assertType('barn', $parent);
+        $this->assertInstanceOf('barn', $parent);
 
         // Make sure it fails when not using the standard naming conventions.
         // A table name must be passed in this case.
@@ -687,7 +687,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch(Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -759,7 +759,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
     {
         $animal = new animal(1);
         $parent = $animal->get_parent_object('barn');
-        $this->assertType('barn', $parent);
+        $this->assertInstanceOf('barn', $parent);
     }
 
     function testGetParentObjectWithMagicSyntaxWhenNamedOddly()
@@ -767,7 +767,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // Should work if we've set the relationship properly in the extended class.
         $animal = new animal(1);
         $parent = $animal->barn();
-        $this->assertType('barn', $parent);
+        $this->assertInstanceOf('barn', $parent);
 
         // Shouldn't work if we're using a generic db_object
         $animal = new db_object('animals', 1);
@@ -776,7 +776,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -785,7 +785,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // Everything should work fine in this case.
         $barn = new barn(1);
         $parent = $barn->farm();
-        $this->assertType('farm', $parent);
+        $this->assertInstanceOf('farm', $parent);
 
         $this->assertEquals(1, $parent->get_id());
     }
@@ -809,7 +809,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
     {
         $farm = new db_object('farm', 1);
         $child = $farm->get_child_object('barn');
-        $this->assertType('barn', $child);
+        $this->assertInstanceOf('barn', $child);
     }
 
     function testGetChildObjectWhenThingsAreNamedFunny()
@@ -818,7 +818,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // What we're really testing is the fact that the foreign key is not named properly.
         $barn = new db_object('barn', 1);
         $child = $barn->get_child_object('animals', 'barn');
-        $this->assertType('db_recordset', $child);
+        $this->assertInstanceOf('db_recordset', $child);
     }
 
     function testGetChildObjectConstraints()
@@ -826,11 +826,11 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // Should only find one, so return a db_object (extended if possible)
         $barn = new db_object('barn', 1);
         $child = $barn->get_child_object('animals', 'barn', "animals.name = 'Cow'");
-        $this->assertType('animal', $child);
+        $this->assertInstanceOf('animal', $child);
 
         // Should find two, so return a db_recorset
         $child = $barn->get_child_object('animals', 'barn', "animals.farm_id = 1");
-        $this->assertType('db_recordset', $child);
+        $this->assertInstanceOf('db_recordset', $child);
 
         // Make sure it returned the correct records
         $this->assertEquals(array(1,2), $child->get_recordset());
@@ -841,18 +841,18 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // Should only find one, but we'll force it to be a db_recordset
         $barn = new db_object('barn', 1);
         $child = $barn->get_child_object('animals', 'barn', "animals.name = 'Cow'", 'db_recordset');
-        $this->assertType('db_recordset', $child);
+        $this->assertInstanceOf('db_recordset', $child);
     }
 
     function testGetChildObjectWhenRelationshipExplicitlyDeclaredInClass()
     {
         $farm = new farm(1);
         $child = $farm->barn();
-        $this->assertType('barn', $child);
+        $this->assertInstanceOf('barn', $child);
 
         $barn = new barn(1);
         $child = $barn->animals();
-        $this->assertType('db_recordset', $child);
+        $this->assertInstanceOf('db_recordset', $child);
     }
 
     function testGetChildObjectWithMagicSyntaxOnGenericDbObjects()
@@ -860,7 +860,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
         // This should work since all the fields are named properly
         $farm = new db_object('farm', 1);
         $child = $farm->animals();
-        $this->assertType('db_recordset', $child);
+        $this->assertInstanceOf('db_recordset', $child);
 
         // This shouldn't work since we have "barn" instead of "barn_id" in the animals table.
         $barn = new db_object('barn', 1);
@@ -869,7 +869,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
 
     }
@@ -882,6 +882,17 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
     {
         $animal = db_object::find(array('name' => 'Cow'), 'animals');
         $this->assertEquals(2, $animal->get_id());
+    }
+        
+    /**
+     *
+     *
+     * @author Kyle Decot <kyle.decot@eschoolconsultants.com>  July 16, 2012
+     *
+     */
+    public function testCreate() {
+        $animal = farm::create(array('name' => 'eSchool Farms'));
+        $this->assertTrue(!empty($animal->id));
     }
     
     function testFindUsingId() {
@@ -910,7 +921,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -969,7 +980,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -1132,7 +1143,7 @@ class DBObjectTest extends PHPUnit_Framework_TestCase {
             $this->fail(); // Fail if the above line doesn't throw an exception
         }
         catch (Exception $e) {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
 
         // A null instantiated db object should have empty attributes

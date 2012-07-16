@@ -149,7 +149,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
         }
         catch (Exception $e)
         {
-            $this->assertType('Exception', $e);
+            $this->assertInstanceOf('Exception', $e);
         }
     }
 
@@ -205,10 +205,10 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     function testInstantiationOfClasses()
     {
         $fruits = new db_recordset('fruits', NULL, TRUE);
-        $this->assertType('fruit', $fruits->first());
+        $this->assertInstanceOf('fruit', $fruits->first());
 
         $objects = new db_recordset('fruits', NULL, FALSE);
-        $this->assertType('db_object', $fruits->first());
+        $this->assertInstanceOf('db_object', $fruits->first());
     }
 
     function testInstantiationWithAlternateKeys()
@@ -435,7 +435,7 @@ class DBRecordsetTest extends PHPUnit_Framework_TestCase
     function testAutoDetectionOfSingularClassNames()
     {
         $rs = new db_recordset('fruits');
-        $this->assertType('fruit', $rs->first());
+        $this->assertInstanceOf('fruit', $rs->first());
     }
 }
 

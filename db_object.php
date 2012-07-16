@@ -1190,6 +1190,19 @@ class db_object {
 
         return $object;
     }
+        
+    /**
+     *
+     *
+     * @author Kyle Decot <kyle.decot@eschoolconsultants.com>  July 16, 2012
+     *
+     */
+    public static function create($attributes = array()) {
+        $obj = new static();
+        $obj->set_attributes($attributes);
+        $obj->add();
+        return $obj;    
+    }
 
     /*********************************************************************
      *
