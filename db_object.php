@@ -33,7 +33,8 @@
 require_once dirname(__FILE__) . '/lib.php';
 require_once dirname(__FILE__) . '/db_recordset.php';
 
-class db_object {
+class db_object
+{
 
     // An array of all attributes pulled from a database or currently set for the object
     protected $attributes;
@@ -87,9 +88,9 @@ class db_object {
     // Arrays: These keep track of various types of database relationships.
     // An example of the format is:
     // $this->has_one_relationship['child_table'] = 'foreign_key';
-    private $has_one_relationship = array();
-    private $has_many_relationship = array();
-    private $belongs_to_relationship = array();
+    protected $has_one_relationship = array();
+    protected $has_many_relationship = array();
+    protected $belongs_to_relationship = array();
 
     // This allows us to cache objects so we don't waste a query every time.
     protected static $object_cache = array();
@@ -132,7 +133,7 @@ class db_object {
         $this->force_no_filtering = false;
         $this->metadata_fields = array();
         $this->metadata_field_override = array();
-        
+
         if ((isset($table_info) && (is_array($table_info) || $table_info instanceof ArrayAccess) && (sizeof($table_info) > 0))) {
             //  Utilize the dry-instantiated $table_info rather than retrieving it from
             //  session or the database
@@ -186,16 +187,16 @@ class db_object {
 
         //Activates default filter for ALL fields
         $this->filter_all_attributes('name');
-        
-        // $id can also be an array of attributes to be used when creating a new record 
+
+        // $id can also be an array of attributes to be used when creating a new record
 
         $prefilled_attributes = array();
-        
+
         if (is_array($id)) {
             $prefilled_attributes = $id;
             $id = null;
         }
-        
+
         if (is_null($id)) {
 
             //  No value or NULL was passed for the $id
@@ -1190,7 +1191,7 @@ class db_object {
 
         return $object;
     }
-        
+
     /**
      *
      *
@@ -1201,7 +1202,7 @@ class db_object {
         $obj = new static();
         $obj->set_attributes($attributes);
         $obj->add();
-        return $obj;    
+        return $obj;
     }
 
     /*********************************************************************
