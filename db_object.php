@@ -1625,6 +1625,21 @@ class db_object
     public function undelete() {
         if ($sd_id = $this->has_soft_deleted_entry()) {
             $sd_obj = new db_object($this->table_name, $sd_id);
+
+            if ($sd_obj->set_attribute('deleted', '0', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false)) {
+                if ($this->logging_enabled === true) {
+                    $this->log_attribute_change('deleted', false, 'undelete');
+                }
+            }
+
+            // return the correct type of object.
+            if (get_class($this) == 'db_object') {
+                $this->__construct($sd_obj->table_name, $sd_obj->get_id());
+            }
+            else {
+                $this->__construct($sd_obj->get_id());
+            }
+
             $related_tables = $this->get_db_relationship_tables();
             foreach ($related_tables as $related_table) {
                 $relationship_type = $this->get_db_relationship_type($related_table);
@@ -1644,19 +1659,6 @@ class db_object
                     case 'belongs_to':
                         break;
                 }
-            }
-            if ($sd_obj->set_attribute('deleted', '0', $force_update=true, $check_acceptable_attribute=true, $metadata_override=false)) {
-                if ($this->logging_enabled === true) {
-                    $this->log_attribute_change('deleted', false, 'undelete');
-                }
-            }
-
-            // return the correct type of object.
-            if (get_class($this) == 'db_object') {
-                $this->__construct($sd_obj->table_name, $sd_obj->get_id());
-            }
-            else {
-                $this->__construct($sd_obj->get_id());
             }
 
             return true;
