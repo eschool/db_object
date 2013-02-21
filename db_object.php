@@ -255,15 +255,18 @@ class db_object
      * Add this object as a new record to the database
      *
      * @param boolean $force
+     * @param boolean $resurrect should we attempt to undelete a matching
+     *                record if found?
      * @return boolean success
      */
-    public function add($force = false)
+    public function add($force = false, $resurrect = true)
     {
-
-        $sd_id = $this->has_soft_deleted_entry();
-        if ($sd_id && !$force) {
-            return $this->undelete();
+        if ($resurrect && !$force) {
+            if ($this->has_soft_deleted_entry()) {
+                return $this->undelete();
+            }
         }
+
         if (!$this->null_instantiated) {
             throw new Exception('Attempted to add already-existing record');
         }
