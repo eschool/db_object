@@ -226,28 +226,8 @@ class db_recordset implements ArrayAccess, Iterator, Countable
                 $where_clause[] = $clause;
         }
 
-        $potential_wheres = $this->get_where_clause_from_constraints($this->constraints);
-        $current_wheres = $where_clause;
-        // We need to strip out empty where in's
-        // Ex: "id IN ('')"
-        if(!empty($current_wheres) && !empty($potential_wheres)){
-            $to_current_wheres = array();
-            foreach($current_wheres as $cw){
-                $cw_array = explode(' ', $cw);
-                if($cw_array[1] == 'IN'){
-                    foreach($potential_wheres as $pw){
-                        $pw_array = explode(' ', $pw);
-                        if($pw_array[1] == 'IN' && $pw_array[0] == $cw_array[0] && $pw_array[2] != "('')"){
-                            $to_current_wheres[] = $pw;
-                        }
-                    }
-                }
-            }
-            $where_clause = array_merge($where_clause, $to_current_wheres);
-        }else{
-            // populate based on given constraints
-            $where_clause = array_merge($where_clause, $potential_wheres);
-        }
+        // populate based on given constraints
+        $where_clause = array_merge($where_clause, $this->get_where_clause_from_constraints($this->constraints));
 
         // Construct the sort by clause
         $sort_array = array();
