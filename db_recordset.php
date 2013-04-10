@@ -226,8 +226,28 @@ class db_recordset implements ArrayAccess, Iterator, Countable
                 $where_clause[] = $clause;
         }
 
-        // populate based on given constraints
-        $where_clause = array_merge($where_clause, $this->get_where_clause_from_constraints($this->constraints));
+        $potential_wheres = $this->get_where_clause_from_constraints($this->constraints);
+        $current_wheres = $where_clause;
+        // We need to strip out empty where in's
+        // Ex: "id IN ('')"
+        if(!empty($current_wheres) && !empty($potential_wheres)){
+            $to_current_wheres = array();
+            foreach($current_wheres as $cw){
+                $cw_array = explode(' ', $cw);
+                if($cw_array[1] == 'IN'){
+                    foreach($potential_wheres as $pw){
+                        $pw_array = explode(' ', $pw);
+                        if($pw_array[1] == 'IN' && $pw_array[0] == $cw_array[0] && $pw_array[2] != "('')"){
+                            $to_current_wheres[] = $pw;
+                        }
+                    }
+                }
+            }
+            $where_clause = array_merge($where_clause, $to_current_wheres);
+        }else{
+            // populate based on given constraints
+            $where_clause = array_merge($where_clause, $potential_wheres);
+        }
 
         // Construct the sort by clause
         $sort_array = array();
@@ -498,9 +518,9 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         }
         return $constraints;
     }
-        
+
     /**
-     * Builds an array by calling the closure on each object in the recordset 
+     * Builds an array by calling the closure on each object in the recordset
      * and collecting the returned value. The array will be index w/ the same
      * keys as the recordset which created
      *
@@ -510,48 +530,48 @@ class db_recordset implements ArrayAccess, Iterator, Countable
     public function collect($callback) {
 
         $collection = array();
-        
-        // If we've passed in an anonymous function then we'll just call that function for each 
+
+        // If we've passed in an anonymous function then we'll just call that function for each
         // one of the objects in the recordset...
-        
+
         if ($callback instanceof Closure) {
             foreach ($this as $index => $object) {
-                $collection[$index] = $callback($object); 
-            }            
+                $collection[$index] = $callback($object);
+            }
         }
-        
-        // If we've passed in a string then we'll first look to see if there is an attribute w/ 
-        // named this. If there is we'll just return that; Otherwise, we'll see if there is a 
-        // method that we can call w/ this name. If there is then we'll return the result of 
+
+        // If we've passed in a string then we'll first look to see if there is an attribute w/
+        // named this. If there is we'll just return that; Otherwise, we'll see if there is a
+        // method that we can call w/ this name. If there is then we'll return the result of
         // that method. If we can do either of those things then we'll throw an Exception because
         // we've obviously passed in some kind of invalid callback...
-        
+
         else if (is_string($callback)) {
-            
-            // Create a null instantiated object so that we can see what kind of attributes/methods 
+
+            // Create a null instantiated object so that we can see what kind of attributes/methods
             // we have to pick from...
-            
+
             $blueprint = new db_object($this->table_name());
-            
+
             // Attribute
             if (in_array($callback, array_keys($blueprint->get_attributes()))) {
                 foreach ($this as $index => $object) {
-                    $collection[$index] = $object->get_attribute($callback); 
-                }    
+                    $collection[$index] = $object->get_attribute($callback);
+                }
             }
             // Method
             else if (method_exists($blueprint, $callback)) {
                 foreach ($this as $index => $object) {
-                    $collection[$index] = call_user_func(array($object, $callback)); 
-                }    
+                    $collection[$index] = call_user_func(array($object, $callback));
+                }
             }
             // Exception
             else {
                 throw new Exception('Invalid callback specified: ' . $callback);
             }
         }
-            
-            
+
+
 
         return $collection;
     }
