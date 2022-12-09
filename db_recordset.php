@@ -559,7 +559,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
     /*******************************************
      * ArrayAccess interface methods
      ******************************************/
-
+    #[ReturnTypeWillChange]
     public function offsetExists($offset)
     {
         if ($this->dirty_data === true)
@@ -570,6 +570,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         return in_array($offset, $this->index_array_key_map);
     }
 
+    #[ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         if ($this->dirty_data === true)
@@ -583,12 +584,14 @@ class db_recordset implements ArrayAccess, Iterator, Countable
             return false;
     }
 
+    #[ReturnTypeWillChange]
     public function offsetSet($offset, $value)
     {
         throw new Exception('Recordsets cannot be appended to at this time');
         return false;
     }
 
+    #[ReturnTypeWillChange]
     public function offsetUnset($offset)
     {
         if ($this->dirty_data === true)
@@ -614,6 +617,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      * Current
      ******************************************************************/
 
+    #[ReturnTypeWillChange]
     public function rewind()
     {
         if ($this->dirty_data === true)
@@ -630,6 +634,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         $this->fetch_row();
     }
 
+    #[ReturnTypeWillChange]
     public function key()
     {
         if ($this->dirty_data === true)
@@ -638,6 +643,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         return $this->current_row_data[$this->primary_key_field_name];
     }
 
+    #[ReturnTypeWillChange]
     public function current()
     {
         if ($this->dirty_data === true)
@@ -646,6 +652,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         return $this->fetch_db_object();
     }
 
+    #[ReturnTypeWillChange]
     public function next()
     {
         if ($this->dirty_data === true)
@@ -655,6 +662,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
         $this->fetch_row();
     }
 
+    #[ReturnTypeWillChange]
     public function valid()
     {
         if ($this->dirty_data === true)
@@ -667,6 +675,7 @@ class db_recordset implements ArrayAccess, Iterator, Countable
      * Countable interface methods
      ******************************************/
 
+    #[ReturnTypeWillChange]
     public function count()
     {
         if ($this->dirty_data === true)
