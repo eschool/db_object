@@ -2003,16 +2003,16 @@ class db_object
      * @author David Prater
      */
     protected function get_valid_filter($content_type) {
-        $valid_types['char'] = FILTER_SANITIZE_STRING;
+//         $valid_types['char'] = FILTER_SANITIZE_STRING;
         $valid_types['int'] = '/[^\d\.\-]/';
         $valid_types['float'] = FILTER_SANITIZE_NUMBER_FLOAT;
         $valid_types['email'] = FILTER_SANITIZE_EMAIL;
         $valid_types['url'] = FILTER_SANITIZE_URL;
         $valid_types['enum'] = 'enum';
         $valid_types['date'] = '/[^\d\s\-\:]/';
-        $valid_types['name'] = FILTER_SANITIZE_STRING;
+//         $valid_types['name'] = FILTER_SANITIZE_STRING;
         $valid_types['raw'] = 'raw';
-        $valid_types['journal'] = FILTER_SANITIZE_STRING; //Strip tags, but allow quotes and newlines
+//         $valid_types['journal'] = FILTER_SANITIZE_STRING; //Strip tags, but allow quotes and newlines
 
         if (array_key_exists($content_type, $valid_types)) {
             return $valid_types[$content_type];
