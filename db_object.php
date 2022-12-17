@@ -166,12 +166,6 @@ class db_object
         foreach ($this->table_info as $row) {
             $this->attributes[$row['Field']] = '';
             if ($row['Key'] == 'PRI') {
-                if (strlen($this->primary_key_field) > 0) {
-                    //  We've already found a primary key field, and db_object does not support
-                    //  more than one right now.
-
-                    //throw new Exception('db_object does not support multifield primary keys', 1);
-                }
                 //  We can kill two birds with one stone here, and get the primary key field, as well
                 $this->primary_key_field = $row['Field'];
             }
@@ -788,7 +782,7 @@ class db_object
         }
 
         // ensure value is trimmed for text values
-        if (in_array($this->get_attribute_type($name), $this->text_types)) {
+        if (! is_null($value) && in_array($this->get_attribute_type($name), $this->text_types)) {
             $value = trim($value);
         }
 
@@ -2158,7 +2152,7 @@ class db_object
         if (is_string($query_string)) {
             $result = mysql_query($query_string);
 
-            if (is_resource($result)) {
+            if ($result instanceof mysqli_result) {
                 $return_array = array();
                 while ($row = mysql_fetch_assoc($result)) {
                     if ($key)
@@ -2167,8 +2161,7 @@ class db_object
                         $return_array[] = $row;
                 }
                 return $return_array;
-            }
-            else {
+            } else {
                 return $result;
             }
         }
